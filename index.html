@@ -30,17 +30,18 @@
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
 
-        /* Bumble Style Match Overlay */
+        /* Bumble Conclusion Style Overlay */
         #match-popup {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000;
+            position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; animation: matchZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
         }
-        @keyframes matchZoom { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        .match-title { font-family: 'Playfair Display', serif; font-size: 48px; font-style: italic; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 20px rgba(255, 133, 162, 0.5); }
-        .match-poster-wrap { width: 240px; height: 350px; border-radius: 20px; overflow: hidden; box-shadow: 0 0 30px var(--accent); margin-bottom: 20px; border: 2px solid var(--accent); }
-        .match-poster-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .match-movie { font-size: 24px; font-weight: 500; color: #fff; margin-bottom: 30px; padding: 0 20px; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .match-title { font-family: 'Playfair Display', serif; font-size: 44px; color: var(--accent); margin-bottom: 10px; }
+        .match-poster-final { width: 220px; height: 320px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent); box-shadow: 0 0 40px var(--accent); margin: 20px 0; }
+        .match-poster-final img { width: 100%; height: 100%; object-fit: cover; }
+        .found-txt { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
     </style>
 </head>
 <body>
@@ -76,11 +77,10 @@
     </div>
 
     <div id="match-popup">
-        <div class="match-title">It's a Match!</div>
-        <div class="match-poster-wrap" id="match-poster"></div>
-        <div id="match-movie-name" class="match-movie">Movie Title</div>
-        <button class="btn-g" onclick="closeMatch()">Keep Swiping</button>
-        <button class="btn-gh" style="margin-top:15px;" onclick="location.reload()">End Session</button>
+        <div class="found-txt">You matched on</div>
+        <div class="match-poster-final" id="m-post-fin"></div>
+        <div id="m-name-fin" class="match-title" style="font-size: 32px; margin-bottom: 30px;">Movie Title</div>
+        <button class="btn-g" onclick="location.reload()">Start New Session</button>
     </div>
 </div>
 
@@ -89,7 +89,7 @@
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
     const OMDB_KEY = "2399d7cb"; 
 
-    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, matchedIndices: new Set() };
+    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false };
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
     function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
@@ -137,15 +137,12 @@
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
-            checkInstantMatch(p.new);
+            checkAndLockMatch(p.new);
         }).subscribe();
     }
 
     async function renderCard() {
-        if (state.idx >= state.movies.length) {
-            document.getElementById('ctit').innerText = "End of list!";
-            return;
-        }
+        if (state.idx >= state.movies.length || state.isMatched) return;
         const title = state.movies[state.idx];
         document.getElementById('ctit').innerText = title;
         const pbox = document.getElementById('pbox');
@@ -158,36 +155,33 @@
     }
 
     async function vote(v) {
+        if (state.isMatched) return;
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         state.idx++; renderCard();
     }
 
-    function checkInstantMatch(data) {
-        const s1 = data.swipes_1 || {}, s2 = data.swipes_2 || {};
+    function checkAndLockMatch(db) {
+        if (state.isMatched) return;
+        const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
         state.movies.forEach((movie, i) => {
-            if (s1[i] === 'yes' && s2[i] === 'yes' && !state.matchedIndices.has(i)) {
-                state.matchedIndices.add(i);
-                triggerPopup(movie);
+            if (s1[i] === 'yes' && s2[i] === 'yes') {
+                state.isMatched = true; // Lock the UI
+                showMatchScreen(movie);
             }
         });
     }
 
-    async function triggerPopup(title) {
-        document.getElementById('match-movie-name').innerText = title;
-        const mPost = document.getElementById('match-poster');
-        mPost.innerHTML = "⏳";
+    async function showMatchScreen(title) {
+        document.getElementById('m-name-fin').innerText = title;
+        const mPost = document.getElementById('m-post-fin');
         document.getElementById('match-popup').style.display = 'flex';
         
-        try {
-            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-            const data = await res.json();
-            mPost.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}" style="width:100%; height:100%; object-fit:cover;">` : "🎬";
-        } catch { mPost.innerHTML = "🎬"; }
+        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+        const data = await res.json();
+        mPost.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
     }
-
-    function closeMatch() { document.getElementById('match-popup').style.display = 'none'; }
 </script>
 </body>
 </html>
