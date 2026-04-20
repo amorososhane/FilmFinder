@@ -26,8 +26,7 @@
         .poster-box img { width: 100%; height: 100%; object-fit: cover; }
         .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; }
         .swbtns { display: flex; gap: 30px; margin-top: 30px; }
-        .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
-        .swb:active { transform: scale(0.9); }
+        .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
     </style>
@@ -36,13 +35,12 @@
 <div class="sm">
     <div id="intro-sc" class="sc on">
         <div class="wordmark">Film<em>Finder</em></div>
-        <div class="tagline">kelly and john</div>
+        <div class="tagline">pink & grey edition</div>
         <button class="btn-g" onclick="showScreen('setup-sc')">Create Room</button>
         <div style="margin: 20px 0; color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 3px;">OR</div>
         <input type="text" id="joinID" class="inp" placeholder="Room Code">
         <button class="btn-gh" onclick="joinRoom()">Join Partner</button>
     </div>
-
     <div id="setup-sc" class="sc">
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
         <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
@@ -51,7 +49,6 @@
         <button class="btn-g" style="margin-top: 20px;" onclick="createRoom()">Start Swiping</button>
         <button class="btn-gh" onclick="showScreen('intro-sc')">Back</button>
     </div>
-
     <div id="sw-sc" class="sc">
         <div id="roomDisp" style="position:absolute; top:40px; font-size:10px; color:var(--accent); letter-spacing: 2px;"></div>
         <div class="mc" id="card">
@@ -63,39 +60,44 @@
             <button class="swb swyes" onclick="vote('yes')">♥</button>
         </div>
     </div>
-
     <div id="wait-sc" class="sc">
         <div class="wordmark" style="font-size: 32px;">Matches!</div>
         <div id="share-info" style="color: var(--accent); margin-bottom: 30px; font-size: 12px;"></div>
         <div id="results-list" style="width: 100%; max-width: 300px;"></div>
     </div>
 </div>
-
 <script>
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const OMDB_KEY = "YOUR_OMDB_KEY"; // Get yours at omdbapi.com
+    const OMDB_KEY = "YOUR_OMDB_KEY"; 
     
     let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {} };
-
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
-
     function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
     function handleCSV(input) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const lines = e.target.result.split(/\r?\n/).filter(l => l.includes(','));
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const rawLines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+            
+            // FIND THE HEADER ROW (The one that contains "Name")
+            let headerRowIndex = rawLines.findIndex(line => line.toLowerCase().includes("date,name,year"));
+            if (headerRowIndex === -1) headerRowIndex = rawLines.findIndex(line => line.toLowerCase().includes("name"));
+            
+            if (headerRowIndex === -1) return alert("Could not find the header row in your CSV.");
+
+            const headers = rawLines[headerRowIndex].split(',').map(h => h.trim().toLowerCase());
             const nameIdx = headers.indexOf('name');
             
-            if (nameIdx === -1) return alert("Could not find 'Name' column in CSV");
+            // Extract everything AFTER the header row
+            const dataLines = rawLines.slice(headerRowIndex + 1);
 
-            const titles = lines.slice(1).map(line => {
-                // Regex handles commas inside quotes correctly
+            const titles = dataLines.map(line => {
+                // This regex correctly handles titles with commas inside quotes
                 const cells = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                return (cells[nameIdx] || "").replace(/^"|"$/g, '').trim();
-            }).filter(t => t && t !== "Name");
+                let val = cells[nameIdx] || "";
+                return val.replace(/^"|"$/g, '').trim();
+            }).filter(t => t.length > 0 && t.toLowerCase() !== "name");
 
             document.getElementById('mtxt').value = titles.join('\n');
         };
@@ -109,27 +111,23 @@
         const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
         if (!error) { state = { rid, user: 1, movies: mvList, idx: 0, mySwipes: {} }; startSession(); }
     }
-
     async function joinRoom() {
         const rid = document.getElementById('joinID').value.toUpperCase();
         const { data } = await sb.from('rooms').select('*').eq('id', rid).single();
         if (data) { state = { rid, user: 2, movies: data.movies, idx: 0, mySwipes: {} }; startSession(); }
     }
-
     function startSession() {
         showScreen('sw-sc');
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
         sb.channel('sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => checkMatches(p.new)).subscribe();
     }
-
     async function renderCard() {
         if (state.idx < state.movies.length) {
             const title = state.movies[state.idx];
             document.getElementById('ctit').innerText = title;
             const pbox = document.getElementById('pbox');
             pbox.innerHTML = "⏳";
-            
             try {
                 const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
                 const data = await res.json();
@@ -141,14 +139,12 @@
             checkMatches();
         }
     }
-
     async function vote(v) {
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         state.idx++; renderCard();
     }
-
     async function checkMatches(dbData) {
         let data = dbData || (await sb.from('rooms').select('*').eq('id', state.rid).single()).data;
         const s1 = data.swipes_1 || {}, s2 = data.swipes_2 || {};
