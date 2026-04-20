@@ -21,10 +21,10 @@
         .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
         .ta { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; height: 120px; resize: none; font-size: 14px; line-height: 1.6; font-family: inherit; }
         .csv-box { border: 2px dashed rgba(255, 133, 162, 0.3); padding: 15px; border-radius: 12px; width: 100%; max-width: 260px; text-align: center; color: var(--accent); font-size: 12px; cursor: pointer; margin-bottom: 10px; }
-        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; }
+        .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .poster-box img { width: 100%; height: 100%; object-fit: cover; }
-        .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; }
+        .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
         .swbtns { display: flex; gap: 30px; margin-top: 30px; }
         .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .swyes { background: var(--accent); color: #000; }
@@ -45,7 +45,7 @@
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
         <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
-        <textarea id="mtxt" class="ta" placeholder="Import your CSV or type titles..."></textarea>
+        <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
         <button class="btn-g" style="margin-top: 20px;" onclick="createRoom()">Start Swiping</button>
         <button class="btn-gh" onclick="showScreen('intro-sc')">Back</button>
     </div>
@@ -69,8 +69,8 @@
 <script>
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const OMDB_KEY = "YOUR_OMDB_KEY"; 
-    
+    const OMDB_KEY = "YOUR_OMDB_KEY"; // Get a free key at omdbapi.com
+
     let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {} };
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
     function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
@@ -80,24 +80,23 @@
         reader.onload = function(e) {
             const rawLines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
             
-            // FIND THE HEADER ROW (The one that contains "Name")
-            let headerRowIndex = rawLines.findIndex(line => line.toLowerCase().includes("date,name,year"));
-            if (headerRowIndex === -1) headerRowIndex = rawLines.findIndex(line => line.toLowerCase().includes("name"));
+            // 1. Skip the short words at the top and find the row with "Date,Name,Year"
+            let headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("date,name,year"));
+            if (headerIdx === -1) headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("name"));
             
-            if (headerRowIndex === -1) return alert("Could not find the header row in your CSV.");
+            if (headerIdx === -1) { alert("Could not find the 'Name' column header."); return; }
 
-            const headers = rawLines[headerRowIndex].split(',').map(h => h.trim().toLowerCase());
-            const nameIdx = headers.indexOf('name');
-            
-            // Extract everything AFTER the header row
-            const dataLines = rawLines.slice(headerRowIndex + 1);
+            // 2. Identify the position of the "Name" column
+            const headers = rawLines[headerIdx].split(',');
+            const nameIdx = headers.findIndex(h => h.trim().toLowerCase() === "name");
 
-            const titles = dataLines.map(line => {
-                // This regex correctly handles titles with commas inside quotes
-                const cells = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                let val = cells[nameIdx] || "";
-                return val.replace(/^"|"$/g, '').trim();
-            }).filter(t => t.length > 0 && t.toLowerCase() !== "name");
+            // 3. Extract names from every row AFTER the header
+            const titles = rawLines.slice(headerIdx + 1).map(line => {
+                // This magic split handles commas inside quotes correctly
+                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                let name = cells[nameIdx] || "";
+                return name.replace(/^"|"$/g, '').trim();
+            }).filter(t => t.length > 0);
 
             document.getElementById('mtxt').value = titles.join('\n');
         };
@@ -107,7 +106,7 @@
     async function createRoom() {
         const mvList = document.getElementById('mtxt').value.split('\n').map(t => t.trim()).filter(t => t !== "");
         const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
-        if(!mvList.length) return alert("List is empty!");
+        if(!mvList.length) return alert("Add some movies first!");
         const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
         if (!error) { state = { rid, user: 1, movies: mvList, idx: 0, mySwipes: {} }; startSession(); }
     }
@@ -135,7 +134,7 @@
             } catch { pbox.innerHTML = "🎬"; }
         } else {
             showScreen('wait-sc');
-            document.getElementById('share-info').innerText = state.user === 1 ? "SHARE CODE: " + state.rid : "WAITING...";
+            document.getElementById('share-info').innerText = state.user === 1 ? "SHARE CODE: " + state.rid : "WAITING FOR PARTNER...";
             checkMatches();
         }
     }
@@ -150,7 +149,7 @@
         const s1 = data.swipes_1 || {}, s2 = data.swipes_2 || {};
         if (Object.keys(s1).length === state.movies.length && Object.keys(s2).length === state.movies.length) {
             const matches = state.movies.filter((m, i) => s1[i] === 'yes' && s2[i] === 'yes');
-            document.getElementById('results-list').innerHTML = matches.map(m => `<div style="background:#333; padding:15px; border-radius:12px; margin-bottom:10px; text-align:center; color:var(--accent); font-size:18px;">${m}</div>`).join('');
+            document.getElementById('results-list').innerHTML = matches.map(m => `<div style="background:#333; padding:15px; border-radius:12px; margin-bottom:10px; text-align:center; color:var(--accent); font-size:20px;">${m}</div>`).join('');
         }
     }
 </script>
