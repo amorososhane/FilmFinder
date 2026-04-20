@@ -16,12 +16,14 @@
         .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: var(--accent); text-align: center; margin-bottom: 8px; }
         .wordmark em { font-style: italic; color: #fff; }
         .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
-        .btn-g { background: var(--accent); color: #000; border: none; padding: 18px 32px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 50px; width: 100%; max-width: 260px; }
+        .btn-g { background: var(--accent); color: #000; border: none; padding: 18px 32px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 50px; width: 100%; max-width: 260px; box-shadow: 0 10px 20px rgba(255, 133, 162, 0.2); }
         .btn-gh { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px; }
         .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
         .ta { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; height: 120px; resize: none; font-size: 14px; line-height: 1.6; font-family: inherit; }
         .csv-box { border: 2px dashed rgba(255, 133, 162, 0.3); padding: 15px; border-radius: 12px; width: 100%; max-width: 260px; text-align: center; color: var(--accent); font-size: 12px; cursor: pointer; margin-bottom: 10px; }
-        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; }
+        
+        /* Swiping Card UI */
+        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; transition: transform 0.2s ease, opacity 0.2s ease; }
         .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .poster-box img { width: 100%; height: 100%; object-fit: cover; }
         .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
@@ -30,21 +32,22 @@
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
 
-        /* Presence Indicator */
-        .status-area { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .pulse-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88; animation: pulse 2s infinite; display: none; }
-        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
-        .status-txt { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); }
+        /* Presence & Status */
+        .status-header { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .pulse-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 12px #00ff88; animation: heartbeat 2s infinite; display: none; }
+        @keyframes heartbeat { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
+        .room-tag { font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; }
 
+        /* Match Conclusion Overlay */
         #match-popup {
             position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
         }
         @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
-        .match-title { font-family: 'Playfair Display', serif; font-size: 44px; color: var(--accent); margin-bottom: 10px; }
-        .match-poster-final { width: 220px; height: 320px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent); box-shadow: 0 0 40px var(--accent); margin: 20px 0; }
+        .match-title { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--accent); margin-bottom: 30px; }
+        .match-poster-final { width: 220px; height: 320px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent); box-shadow: 0 0 40px rgba(255, 133, 162, 0.4); margin: 20px 0; }
         .match-poster-final img { width: 100%; height: 100%; object-fit: cover; }
         .found-txt { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
     </style>
@@ -64,17 +67,17 @@
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
         <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
-        <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
+        <textarea id="mtxt" class="ta" placeholder="Paste movie titles here..."></textarea>
         <button class="btn-gh" style="margin-bottom:10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
         <button class="btn-g" onclick="createRoom()">Start Swiping</button>
     </div>
 
     <div id="sw-sc" class="sc">
-        <div class="status-area">
+        <div class="status-header">
             <div id="dot" class="pulse-dot"></div>
-            <div id="roomDisp" class="status-txt"></div>
+            <div id="roomDisp" class="room-tag"></div>
         </div>
-        <div class="mc" id="card">
+        <div class="mc" id="main-card">
             <div class="poster-box" id="pbox">🎬</div>
             <div id="ctit" class="ct">Loading...</div>
         </div>
@@ -87,8 +90,8 @@
     <div id="match-popup">
         <div class="found-txt">You matched on</div>
         <div class="match-poster-final" id="m-post-fin"></div>
-        <div id="m-name-fin" class="match-title" style="font-size: 32px; margin-bottom: 30px;">Movie Title</div>
-        <button class="btn-g" onclick="location.reload()">Start New Session</button>
+        <div id="m-name-fin" class="match-title">Movie Title</div>
+        <button class="btn-g" onclick="location.reload()">New Session</button>
     </div>
 </div>
 
@@ -98,7 +101,7 @@
     const OMDB_KEY = "2399d7cb"; 
 
     let sb; 
-    let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false, posterCache: {} };
+    let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false, cache: {} };
     
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
     
@@ -145,14 +148,16 @@
 
     function startSession() {
         showScreen('sw-sc');
-        document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
+        document.getElementById('roomDisp').innerText = state.rid;
         renderCard();
+        // Listener for Presence and Matches
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
             updatePresence(p.new);
             checkAndLockMatch(p.new);
         }).subscribe();
     }
 
+    // Cuter Update: Shows pulse when partner is active
     function updatePresence(db) {
         const partnerCol = state.user === 1 ? 'swipes_2' : 'swipes_1';
         const partnerSwipes = Object.keys(db[partnerCol] || {}).length;
@@ -161,15 +166,15 @@
         }
     }
 
-    async function fetchPoster(title, index) {
-        if (state.posterCache[index]) return state.posterCache[index];
+    // Smarter Update: Prefetches posters so there is no flicker
+    async function getPoster(title, index) {
+        if (state.cache[index]) return state.cache[index];
         try {
             const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
             const data = await res.json();
             const url = (data.Poster && data.Poster !== "N/A") ? data.Poster : "🎬";
-            state.posterCache[index] = url;
-            // If it's a real URL, pre-cache the image in the browser
-            if (url !== "🎬") { const img = new Image(); img.src = url; }
+            state.cache[index] = url;
+            if (url !== "🎬") { const img = new Image(); img.src = url; } // Browser pre-cache
             return url;
         } catch { return "🎬"; }
     }
@@ -178,18 +183,14 @@
         if (state.idx >= state.movies.length || state.isMatched) return;
         const title = state.movies[state.idx];
         document.getElementById('ctit').innerText = title;
-        const pbox = document.getElementById('pbox');
+        
+        const poster = await getPoster(title, state.idx);
+        document.getElementById('pbox').innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
 
-        // Show cached or fetch
-        const poster = await fetchPoster(title, state.idx);
-        pbox.innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
-
-        // Smart Prefetch: Get next 3 posters while user is looking at this one
+        // Background prefetch next 3
         for (let i = 1; i <= 3; i++) {
-            const nextIdx = state.idx + i;
-            if (nextIdx < state.movies.length) {
-                fetchPoster(state.movies[nextIdx], nextIdx);
-            }
+            const n = state.idx + i;
+            if (n < state.movies.length) getPoster(state.movies[n], n);
         }
     }
 
@@ -197,13 +198,24 @@
         if (state.isMatched) return;
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
+        
+        // Card animation
+        const card = document.getElementById('main-card');
+        card.style.transform = v === 'yes' ? 'translateX(100px) rotate(10deg)' : 'translateX(-100px) rotate(-10deg)';
+        card.style.opacity = '0';
+
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         
+        // Check for local match immediately for speed
         const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
         checkAndLockMatch(data);
 
-        state.idx++; 
-        renderCard();
+        setTimeout(() => {
+            card.style.transform = 'none';
+            card.style.opacity = '1';
+            state.idx++; 
+            renderCard();
+        }, 200);
     }
 
     function checkAndLockMatch(db) {
@@ -219,11 +231,9 @@
 
     async function showMatchScreen(title, index) {
         document.getElementById('m-name-fin').innerText = title;
-        const mPost = document.getElementById('m-post-fin');
+        const poster = await getPoster(title, index);
+        document.getElementById('m-post-fin').innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
         document.getElementById('match-popup').style.display = 'flex';
-        
-        const poster = await fetchPoster(title, index);
-        mPost.innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
     }
 </script>
 </body>
