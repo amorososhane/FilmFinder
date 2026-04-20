@@ -11,46 +11,42 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100%; width: 100%; overflow: hidden; }
         
-        /* The App Container */
-        .sm { height: 100vh; width: 100vw; position: relative; display: flex; flex-direction: column; z-index: 1; }
+        .sm { height: 100vh; width: 100vw; position: relative; }
 
-        /* The Screens */
         .sc { 
             position: absolute; inset: 0; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             padding: 24px; opacity: 0; visibility: hidden;
-            transition: opacity .3s ease; z-index: 2;
+            transition: opacity .3s ease;
         }
-        .sc.on { opacity: 1; visibility: visible; z-index: 10; pointer-events: auto; }
+        .sc.on { opacity: 1; visibility: visible; pointer-events: auto; z-index: 10; }
 
-        .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: #fff; text-align: center; margin-bottom: 8px; }
+        .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: #fff; text-align: center; margin-bottom: 8px; pointer-events: none; }
         .wordmark em { font-style: italic; color: var(--accent); }
-        .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 40px; }
+        .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 40px; pointer-events: none; }
 
-        /* BUTTONS - Added pointer-events and high z-index */
         .btn-g { 
             background: var(--accent); color: #fff; border: none; 
-            padding: 16px 32px; font-size: 13px; font-weight: 600; 
+            padding: 18px 32px; font-size: 13px; font-weight: 600; 
             letter-spacing: .1em; text-transform: uppercase; 
             cursor: pointer; border-radius: 12px; width: 100%; max-width: 260px; 
-            position: relative; z-index: 20; pointer-events: auto !important;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            display: block; position: relative; z-index: 50 !important;
         }
         .btn-gh { 
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-            color: rgba(255,255,255,0.7); padding: 14px; border-radius: 12px; 
+            color: rgba(255,255,255,0.7); padding: 16px; border-radius: 12px; 
             cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px;
-            position: relative; z-index: 20; pointer-events: auto !important;
+            display: block; position: relative; z-index: 50 !important;
         }
-        .btn-g:active, .btn-gh:active { transform: scale(0.98); opacity: 0.8; }
 
         .inp { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 10px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
         .ta { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 10px; width: 100%; max-width: 260px; height: 140px; resize: none; font-size: 16px; font-family: inherit; }
 
-        /* Card Styles */
-        .mc { background: #171717; border: 1px solid rgba(255,255,255,0.1); padding: 50px 24px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+        .mc { background: #171717; border: 1px solid rgba(255,255,255,0.1); padding: 50px 24px; border-radius: 24px; width: 300px; text-align: center; }
         .ct { font-family: 'Playfair Display', serif; font-size: 32px; color: #fff; }
         .swbtns { display: flex; gap: 30px; margin-top: 40px; }
-        .swb { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 30; }
+        .swb { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 100; }
         .swyes { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
         .swno { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
     </style>
@@ -63,14 +59,14 @@
         <div class="tagline">sync your movie night</div>
         <button class="btn-g" onclick="showScreen('setup-sc')">Create Room</button>
         <div style="margin: 20px 0; color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 3px;">OR</div>
-        <input type="text" id="joinID" class="inp" placeholder="Room Code (e.g. A1B2)">
+        <input type="text" id="joinID" class="inp" placeholder="Room Code">
         <button class="btn-gh" onclick="joinRoom()">Join Partner</button>
     </div>
 
     <div id="setup-sc" class="sc">
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Room Setup</div>
         <input type="text" id="myName" class="inp" placeholder="Your Name">
-        <textarea id="mtxt" class="ta" placeholder="Enter movie titles...&#10;Inception&#10;The Bear&#10;Interstellar"></textarea>
+        <textarea id="mtxt" class="ta" placeholder="Enter movie titles (one per line)..."></textarea>
         <button class="btn-g" style="margin-top: 20px;" onclick="createRoom()">Start Swiping</button>
         <button class="btn-gh" onclick="showScreen('intro-sc')">Cancel</button>
     </div>
@@ -84,7 +80,7 @@
         </div>
     </div>
 
-    <div id="wait-sc" class="sc">
+    <div id="wait-sc" class="sc" style="overflow-y: auto; justify-content: flex-start; padding-top: 60px;">
         <div id="wait-msg" style="text-align: center;">
             <div class="wordmark" style="font-size: 32px;">Waiting...</div>
             <p id="share-info" style="color: gray; margin-bottom: 30px;"></p>
@@ -94,13 +90,25 @@
 </div>
 
 <script>
+    // These match your Supabase project
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const supabase = lib.supabase.createClient(SB_URL, SB_KEY);
-
+    
+    let supabase;
     let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {} };
 
+    // Initialize Supabase safely
+    window.onload = () => {
+        if (typeof supabasejs !== 'undefined') {
+            supabase = supabasejs.createClient(SB_URL, SB_KEY);
+        } else if (window.supabase) {
+            // Some versions use window.supabase
+            supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        }
+    };
+
     function showScreen(id) {
+        console.log("Navigating to: " + id); // Check your browser console!
         document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
         const target = document.getElementById(id);
         if(target) target.classList.add('on');
@@ -111,27 +119,31 @@
         const mvList = document.getElementById('mtxt').value.split('\n').filter(t => t.trim() !== "");
         const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
         
-        if(mvList.length === 0) return alert("Add some movies first!");
+        if(mvList.length === 0) { alert("Add some movies first!"); return; }
 
-        const { error } = await supabase.from('rooms').insert([{
-            id: rid, movies: mvList, name_1: name, swipes_1: {}, swipes_2: {}
-        }]);
-
-        if (!error) {
+        try {
+            const { error } = await supabase.from('rooms').insert([{
+                id: rid, movies: mvList, name_1: name, swipes_1: {}, swipes_2: {}
+            }]);
+            if (error) throw error;
             state = { rid, user: 1, movies: mvList, idx: 0, mySwipes: {} };
             startSession();
-        } else { alert("Database Error: " + error.message); }
+        } catch (e) {
+            alert("Database Error: " + e.message);
+        }
     }
 
     async function joinRoom() {
         const rid = document.getElementById('joinID').value.toUpperCase();
         if(!rid) return;
-        const { data, error } = await supabase.from('rooms').select('*').eq('id', rid).single();
-
-        if (data) {
+        try {
+            const { data, error } = await supabase.from('rooms').select('*').eq('id', rid).single();
+            if (error || !data) throw new Error("Room not found");
             state = { rid, user: 2, movies: data.movies, idx: 0, mySwipes: {} };
             startSession();
-        } else { alert("Room not found!"); }
+        } catch (e) {
+            alert(e.message);
+        }
     }
 
     function startSession() {
@@ -139,6 +151,7 @@
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
         
+        // Listen for matches
         supabase.channel('sync')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, 
             p => checkMatches(p.new))
@@ -151,7 +164,7 @@
         } else {
             showScreen('wait-sc');
             document.getElementById('share-info').innerText = state.user === 1 ? 
-                "Share code " + state.rid + " with your partner." : "Waiting for partner...";
+                "Tell partner to join code: " + state.rid : "Waiting for results...";
             checkMatches();
         }
     }
@@ -174,7 +187,9 @@
         if (Object.keys(s1).length === state.movies.length && Object.keys(s2).length === state.movies.length) {
             const matches = state.movies.filter((m, i) => s1[i] === 'yes' && s2[i] === 'yes');
             document.getElementById('wait-msg').innerHTML = `<div class="wordmark" style="font-size:32px">Matches!</div>`;
-            document.getElementById('results-list').innerHTML = matches.map(m => `<div style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; text-align:center; font-family:'Playfair Display'; font-size:20px;">${m}</div>`).join('');
+            document.getElementById('results-list').innerHTML = matches.length > 0 ? 
+                matches.map(m => `<div style="background:#1a1a1a; padding:15px; border-radius:12px; margin-bottom:10px; text-align:center; font-family:'Playfair Display'; font-size:22px;">${m}</div>`).join('') :
+                `<p>No matches. Sad!</p>`;
         }
     }
 </script>
