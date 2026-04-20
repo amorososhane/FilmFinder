@@ -7,33 +7,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { 
-            --accent: #ff85a2; /* Soft Pink */
-            --bg: #1a1a1a;    /* Deep Grey */
-            --card: #262626;  /* Lighter Grey */
-            --text: #ffffff; 
-        }
+        :root { --accent: #ff85a2; --bg: #1a1a1a; --card: #262626; --text: #ffffff; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100%; width: 100%; overflow: hidden; }
-        
         .sm { height: 100vh; width: 100vw; position: relative; }
         .sc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; opacity: 0; visibility: hidden; transition: opacity .3s ease; }
         .sc.on { opacity: 1; visibility: visible; pointer-events: auto; z-index: 10; }
-
         .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: var(--accent); text-align: center; margin-bottom: 8px; }
         .wordmark em { font-style: italic; color: #fff; }
         .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
-
-        /* UI Elements */
         .btn-g { background: var(--accent); color: #000; border: none; padding: 18px 32px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 50px; width: 100%; max-width: 260px; }
         .btn-gh { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px; }
         .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
         .ta { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; height: 120px; resize: none; font-size: 14px; line-height: 1.6; font-family: inherit; }
-        
         .csv-box { border: 2px dashed rgba(255, 133, 162, 0.3); padding: 15px; border-radius: 12px; width: 100%; max-width: 260px; text-align: center; color: var(--accent); font-size: 12px; cursor: pointer; margin-bottom: 10px; }
-        
         .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 60px 24px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .ct { font-family: 'Playfair Display', serif; font-size: 28px; color: #fff; line-height: 1.2; }
+        .ct { font-family: 'Playfair Display', serif; font-size: clamp(20px, 5vw, 28px); color: #fff; line-height: 1.2; word-wrap: break-word; padding: 0 10px; }
         .swbtns { display: flex; gap: 30px; margin-top: 40px; }
         .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .swyes { background: var(--accent); color: #000; }
@@ -41,31 +30,23 @@
     </style>
 </head>
 <body>
-
 <div class="sm">
     <div id="intro-sc" class="sc on">
         <div class="wordmark">Film<em>Finder</em></div>
-        <div class="tagline">pink & grey edition</div>
+        <div class="tagline">kelly and john</div>
         <button class="btn-g" onclick="showScreen('setup-sc')">Create Room</button>
         <div style="margin: 20px 0; color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 3px;">OR</div>
         <input type="text" id="joinID" class="inp" placeholder="Room Code">
         <button class="btn-gh" onclick="joinRoom()">Join Partner</button>
     </div>
-
     <div id="setup-sc" class="sc">
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Add Movies</div>
-        
-        <div class="csv-box" onclick="document.getElementById('csv-file').click()">
-            + Import Film Names (CSV)
-        </div>
+        <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Film Names (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
-        
         <textarea id="mtxt" class="ta" placeholder="Paste titles here or import CSV..."></textarea>
-        
         <button class="btn-g" style="margin-top: 20px;" onclick="createRoom()">Start Swiping</button>
         <button class="btn-gh" onclick="showScreen('intro-sc')">Back</button>
     </div>
-
     <div id="sw-sc" class="sc">
         <div id="roomDisp" style="position:absolute; top:40px; font-size:10px; color:var(--accent); letter-spacing: 2px;"></div>
         <div class="mc" id="card"><div id="ctit" class="ct">Loading...</div></div>
@@ -74,113 +55,62 @@
             <button class="swb swyes" onclick="vote('yes')">♥</button>
         </div>
     </div>
-
     <div id="wait-sc" class="sc">
         <div class="wordmark" style="font-size: 32px;">Matches!</div>
         <div id="share-info" style="color: var(--accent); margin-bottom: 30px; font-size: 12px; letter-spacing: 1px;"></div>
         <div id="results-list" style="width: 100%; max-width: 300px;"></div>
     </div>
 </div>
-
 <script>
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    
-    let sb; 
-    let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {} };
-
-    window.onload = () => {
-        if (typeof supabase !== 'undefined') {
-            sb = supabase.createClient(SB_URL, SB_KEY);
-        }
-    };
-
-    function showScreen(id) {
-        document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
-        document.getElementById(id).classList.add('on');
-    }
-
-    // UPDATED: Robust CSV Parser for Film Names Only
+    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {} };
+    window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
+    function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
     function handleCSV(input) {
-        const file = input.files[0];
-        const reader = new FileReader();
+        const file = input.files[0]; const reader = new FileReader();
         reader.onload = function(e) {
-            const text = e.target.result;
-            const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+            const lines = e.target.result.split(/\r?\n/).filter(line => line.trim() !== "");
             if (lines.length < 2) return;
-
-            // Find which column is "Name"
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
             const nameIdx = headers.indexOf('name');
-            
-            if (nameIdx === -1) {
-                alert("Could not find 'Name' column in your CSV.");
-                return;
-            }
-
+            if (nameIdx === -1) { alert("Could not find 'Name' column."); return; }
             const filmNames = lines.slice(1).map(line => {
-                // Regex handles commas inside quotes: "Title, The" -> Title, The
-                const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                let name = parts[nameIdx] || "";
-                return name.replace(/^"|"$/g, '').trim();
+                const csvRegex = /(".*?"|[^",\s]+)(?=\s*,|\s*$)/g;
+                const matches = []; let match;
+                while ((match = csvRegex.exec(line)) !== null) matches.push(match[0]);
+                return (matches[nameIdx] || "").replace(/^"|"$/g, '').trim();
             }).filter(t => t.length > 0);
-            
-            // Put it in the box for manual editing
             const box = document.getElementById('mtxt');
             box.value = (box.value + (box.value ? '\n' : '') + filmNames.join('\n')).trim();
         };
         reader.readAsText(file);
     }
-
     async function createRoom() {
         const mvList = document.getElementById('mtxt').value.split('\n').map(t => t.trim()).filter(t => t !== "");
         const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
         if(mvList.length === 0) return alert("Add movies first!");
-
-        const { error } = await sb.from('rooms').insert([{
-            id: rid, movies: mvList, swipes_1: {}, swipes_2: {}
-        }]);
-
-        if (!error) {
-            state = { rid, user: 1, movies: mvList, idx: 0, mySwipes: {} };
-            startSession();
-        } else { alert("Error: " + error.message); }
+        const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
+        if (!error) { state = { rid, user: 1, movies: mvList, idx: 0, mySwipes: {} }; startSession(); } else { alert("Error: " + error.message); }
     }
-
     async function joinRoom() {
         const rid = document.getElementById('joinID').value.toUpperCase();
         const { data, error } = await sb.from('rooms').select('*').eq('id', rid).single();
-        if (data) {
-            state = { rid, user: 2, movies: data.movies, idx: 0, mySwipes: {} };
-            startSession();
-        } else { alert("Room not found!"); }
+        if (data) { state = { rid, user: 2, movies: data.movies, idx: 0, mySwipes: {} }; startSession(); } else { alert("Room not found!"); }
     }
-
     function startSession() {
-        showScreen('sw-sc');
-        document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
-        renderCard();
+        showScreen('sw-sc'); document.getElementById('roomDisp').innerText = "ROOM: " + state.rid; renderCard();
         sb.channel('sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => checkMatches(p.new)).subscribe();
     }
-
     function renderCard() {
-        if (state.idx < state.movies.length) {
-            document.getElementById('ctit').innerText = state.movies[state.idx];
-        } else {
-            showScreen('wait-sc');
-            document.getElementById('share-info').innerText = state.user === 1 ? "PARTNER CODE: " + state.rid : "WAITING FOR PARTNER...";
-            checkMatches();
-        }
+        if (state.idx < state.movies.length) { document.getElementById('ctit').innerText = state.movies[state.idx]; }
+        else { showScreen('wait-sc'); document.getElementById('share-info').innerText = state.user === 1 ? "PARTNER CODE: " + state.rid : "WAITING FOR PARTNER..."; checkMatches(); }
     }
-
     async function vote(v) {
-        state.mySwipes[state.idx] = v;
-        const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
+        state.mySwipes[state.idx] = v; const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
-        state.idx++;
-        renderCard();
+        state.idx++; renderCard();
     }
-
     async function checkMatches(dbData) {
         let data = dbData || (await sb.from('rooms').select('*').eq('id', state.rid).single()).data;
         const s1 = data.swipes_1 || {}, s2 = data.swipes_2 || {};
