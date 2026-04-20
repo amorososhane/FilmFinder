@@ -30,15 +30,17 @@
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
 
-        /* Instant Match Overlay */
+        /* Bumble Style Match Overlay */
         #match-popup {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; animation: fadeIn 0.5s ease;
+            text-align: center; animation: matchZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .match-title { font-family: 'Playfair Display', serif; font-size: 40px; color: var(--accent); margin-bottom: 10px; }
-        .match-movie { font-size: 22px; color: #fff; margin-bottom: 30px; padding: 0 20px; }
+        @keyframes matchZoom { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        .match-title { font-family: 'Playfair Display', serif; font-size: 48px; font-style: italic; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 20px rgba(255, 133, 162, 0.5); }
+        .match-poster-wrap { width: 240px; height: 350px; border-radius: 20px; overflow: hidden; box-shadow: 0 0 30px var(--accent); margin-bottom: 20px; border: 2px solid var(--accent); }
+        .match-poster-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .match-movie { font-size: 24px; font-weight: 500; color: #fff; margin-bottom: 30px; padding: 0 20px; }
     </style>
 </head>
 <body>
@@ -75,17 +77,17 @@
 
     <div id="match-popup">
         <div class="match-title">It's a Match!</div>
-        <div id="match-poster" class="poster-box" style="width: 200px; height: 300px; margin-bottom: 20px;"></div>
+        <div class="match-poster-wrap" id="match-poster"></div>
         <div id="match-movie-name" class="match-movie">Movie Title</div>
         <button class="btn-g" onclick="closeMatch()">Keep Swiping</button>
-        <button class="btn-gh" onclick="location.reload()">End Session</button>
+        <button class="btn-gh" style="margin-top:15px;" onclick="location.reload()">End Session</button>
     </div>
 </div>
 
 <script>
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const OMDB_KEY = "750ecdf8"; 
+    const OMDB_KEY = "2399d7cb"; 
 
     let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, matchedIndices: new Set() };
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
@@ -134,7 +136,6 @@
         showScreen('sw-sc');
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
-        // REAL-TIME LISTENER: This is what makes it "Instant"
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
             checkInstantMatch(p.new);
         }).subscribe();
@@ -149,9 +150,11 @@
         document.getElementById('ctit').innerText = title;
         const pbox = document.getElementById('pbox');
         pbox.innerHTML = "⏳";
-        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-        const data = await res.json();
-        pbox.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
+        try {
+            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+            const data = await res.json();
+            pbox.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
+        } catch { pbox.innerHTML = "🎬"; }
     }
 
     async function vote(v) {
@@ -163,7 +166,6 @@
 
     function checkInstantMatch(data) {
         const s1 = data.swipes_1 || {}, s2 = data.swipes_2 || {};
-        // Look for any index where both said 'yes' that we haven't popped up yet
         state.movies.forEach((movie, i) => {
             if (s1[i] === 'yes' && s2[i] === 'yes' && !state.matchedIndices.has(i)) {
                 state.matchedIndices.add(i);
@@ -174,10 +176,15 @@
 
     async function triggerPopup(title) {
         document.getElementById('match-movie-name').innerText = title;
-        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-        const data = await res.json();
-        document.getElementById('match-poster').innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}" style="width:100%; height:100%; object-fit:cover;">` : "🎬";
+        const mPost = document.getElementById('match-poster');
+        mPost.innerHTML = "⏳";
         document.getElementById('match-popup').style.display = 'flex';
+        
+        try {
+            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+            const data = await res.json();
+            mPost.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}" style="width:100%; height:100%; object-fit:cover;">` : "🎬";
+        } catch { mPost.innerHTML = "🎬"; }
     }
 
     function closeMatch() { document.getElementById('match-popup').style.display = 'none'; }
