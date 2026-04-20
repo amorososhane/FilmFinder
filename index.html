@@ -21,8 +21,6 @@
         .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
         .ta { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; height: 120px; resize: none; font-size: 14px; line-height: 1.6; font-family: inherit; }
         .csv-box { border: 2px dashed rgba(255, 133, 162, 0.3); padding: 15px; border-radius: 12px; width: 100%; max-width: 260px; text-align: center; color: var(--accent); font-size: 12px; cursor: pointer; margin-bottom: 10px; }
-        
-        /* Swiping Card UI */
         .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; transition: transform 0.2s ease, opacity 0.2s ease; }
         .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .poster-box img { width: 100%; height: 100%; object-fit: cover; }
@@ -32,13 +30,13 @@
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
 
-        /* Presence & Status */
+        /* Presence & Status UI */
         .status-header { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .pulse-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 12px #00ff88; animation: heartbeat 2s infinite; display: none; }
         @keyframes heartbeat { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
         .room-tag { font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; }
 
-        /* Match Conclusion Overlay */
+        /* Match Overlay */
         #match-popup {
             position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -67,7 +65,7 @@
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
         <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
-        <textarea id="mtxt" class="ta" placeholder="Paste movie titles here..."></textarea>
+        <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
         <button class="btn-gh" style="margin-bottom:10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
         <button class="btn-g" onclick="createRoom()">Start Swiping</button>
     </div>
@@ -107,6 +105,7 @@
     
     function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
+    // Original CSV Logic
     function handleCSV(input) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -124,6 +123,7 @@
         reader.readAsText(input.files[0]);
     }
 
+    // Original Shuffle Logic
     function shuffleList() {
         let titles = document.getElementById('mtxt').value.split('\n').filter(t => t.trim() !== "");
         for (let i = titles.length - 1; i > 0; i--) {
@@ -136,37 +136,40 @@
     async function createRoom() {
         const mvList = document.getElementById('mtxt').value.split('\n').map(t => t.trim()).filter(t => t !== "");
         const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
+        // swipes_2 starts as null to allow the ASAP join trigger
+        const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: null }]);
         if (!error) { state = { ...state, rid, user: 1, movies: mvList }; startSession(); }
     }
 
     async function joinRoom() {
         const rid = document.getElementById('joinID').value.toUpperCase();
         const { data } = await sb.from('rooms').select('*').eq('id', rid).single();
-        if (data) { state = { ...state, rid, user: 2, movies: data.movies }; startSession(); }
+        if (data) { 
+            state = { ...state, rid, user: 2, movies: data.movies }; 
+            // SIGNAL JOIN ASAP: Update null to empty object
+            await sb.from('rooms').update({ swipes_2: {} }).eq('id', rid);
+            startSession(); 
+        }
     }
 
     function startSession() {
         showScreen('sw-sc');
         document.getElementById('roomDisp').innerText = state.rid;
         renderCard();
-        // Listener for Presence and Matches
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
             updatePresence(p.new);
             checkAndLockMatch(p.new);
         }).subscribe();
     }
 
-    // Cuter Update: Shows pulse when partner is active
+    // ASAP Pulse Logic
     function updatePresence(db) {
-        const partnerCol = state.user === 1 ? 'swipes_2' : 'swipes_1';
-        const partnerSwipes = Object.keys(db[partnerCol] || {}).length;
-        if (partnerSwipes > 0) {
+        if (db.swipes_2 !== null) {
             document.getElementById('dot').style.display = 'block';
         }
     }
 
-    // Smarter Update: Prefetches posters so there is no flicker
+    // Smarter Prefetching Logic
     async function getPoster(title, index) {
         if (state.cache[index]) return state.cache[index];
         try {
@@ -174,7 +177,7 @@
             const data = await res.json();
             const url = (data.Poster && data.Poster !== "N/A") ? data.Poster : "🎬";
             state.cache[index] = url;
-            if (url !== "🎬") { const img = new Image(); img.src = url; } // Browser pre-cache
+            if (url !== "🎬") { const img = new Image(); img.src = url; }
             return url;
         } catch { return "🎬"; }
     }
@@ -187,7 +190,7 @@
         const poster = await getPoster(title, state.idx);
         document.getElementById('pbox').innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
 
-        // Background prefetch next 3
+        // Prefetch next 3 in background
         for (let i = 1; i <= 3; i++) {
             const n = state.idx + i;
             if (n < state.movies.length) getPoster(state.movies[n], n);
@@ -199,14 +202,14 @@
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         
-        // Card animation
+        // Simple swipe animation
         const card = document.getElementById('main-card');
         card.style.transform = v === 'yes' ? 'translateX(100px) rotate(10deg)' : 'translateX(-100px) rotate(-10deg)';
         card.style.opacity = '0';
 
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         
-        // Check for local match immediately for speed
+        // Instant local match check
         const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
         checkAndLockMatch(data);
 
@@ -218,6 +221,7 @@
         }, 200);
     }
 
+    // Original Match Logic (No change to how matches are found)
     function checkAndLockMatch(db) {
         if (state.isMatched) return;
         const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
