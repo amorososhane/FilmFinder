@@ -29,26 +29,38 @@
         .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
+
+        /* Instant Match Overlay */
+        #match-popup {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .match-title { font-family: 'Playfair Display', serif; font-size: 40px; color: var(--accent); margin-bottom: 10px; }
+        .match-movie { font-size: 22px; color: #fff; margin-bottom: 30px; padding: 0 20px; }
     </style>
 </head>
 <body>
 <div class="sm">
     <div id="intro-sc" class="sc on">
         <div class="wordmark">Film<em>Finder</em></div>
-        <div class="tagline">kelly and john</div>
+        <div class="tagline">Kelly and John</div>
         <button class="btn-g" onclick="showScreen('setup-sc')">Create Room</button>
         <div style="margin: 20px 0; color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 3px;">OR</div>
         <input type="text" id="joinID" class="inp" placeholder="Room Code">
         <button class="btn-gh" onclick="joinRoom()">Join Partner</button>
     </div>
+
     <div id="setup-sc" class="sc">
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
         <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
         <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
-        <button class="btn-g" style="margin-top: 20px;" onclick="createRoom()">Start Swiping</button>
-        <button class="btn-gh" onclick="showScreen('intro-sc')">Back</button>
+        <button class="btn-gh" style="margin-bottom:10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
+        <button class="btn-g" onclick="createRoom()">Start Swiping</button>
     </div>
+
     <div id="sw-sc" class="sc">
         <div id="roomDisp" style="position:absolute; top:40px; font-size:10px; color:var(--accent); letter-spacing: 2px;"></div>
         <div class="mc" id="card">
@@ -60,17 +72,22 @@
             <button class="swb swyes" onclick="vote('yes')">♥</button>
         </div>
     </div>
-    <div id="wait-sc" class="sc">
-        <div class="wordmark" style="font-size: 32px;">Matches!</div>
-        <div id="share-info" style="color: var(--accent); margin-bottom: 30px; font-size: 12px;"></div>
-        <div id="results-list" style="width: 100%; max-width: 300px;"></div>
+
+    <div id="match-popup">
+        <div class="match-title">It's a Match!</div>
+        <div id="match-poster" class="poster-box" style="width: 200px; height: 300px; margin-bottom: 20px;"></div>
+        <div id="match-movie-name" class="match-movie">Movie Title</div>
+        <button class="btn-g" onclick="closeMatch()">Keep Swiping</button>
+        <button class="btn-gh" onclick="location.reload()">End Session</button>
     </div>
 </div>
+
 <script>
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const OMDB_KEY = "2399d7cb"; 
-    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {} };
+    const OMDB_KEY = "750ecdf8"; 
+
+    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, matchedIndices: new Set() };
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
     function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
@@ -78,79 +95,92 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             const rawLines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
-            
-            // 1. Skip the short words at the top and find the row with "Date,Name,Year"
-            let headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("date,name,year"));
-            if (headerIdx === -1) headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("name"));
-            
-            if (headerIdx === -1) { alert("Could not find the 'Name' column header."); return; }
-
-            // 2. Identify the position of the "Name" column
+            let headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("name"));
+            if (headerIdx === -1) return;
             const headers = rawLines[headerIdx].split(',');
             const nameIdx = headers.findIndex(h => h.trim().toLowerCase() === "name");
-
-            // 3. Extract names from every row AFTER the header
             const titles = rawLines.slice(headerIdx + 1).map(line => {
-                // This magic split handles commas inside quotes correctly
                 const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                let name = cells[nameIdx] || "";
-                return name.replace(/^"|"$/g, '').trim();
+                return (cells[nameIdx] || "").replace(/^"|"$/g, '').trim();
             }).filter(t => t.length > 0);
-
             document.getElementById('mtxt').value = titles.join('\n');
         };
         reader.readAsText(input.files[0]);
     }
 
+    function shuffleList() {
+        let titles = document.getElementById('mtxt').value.split('\n').filter(t => t.trim() !== "");
+        for (let i = titles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [titles[i], titles[j]] = [titles[j], titles[i]];
+        }
+        document.getElementById('mtxt').value = titles.join('\n');
+    }
+
     async function createRoom() {
         const mvList = document.getElementById('mtxt').value.split('\n').map(t => t.trim()).filter(t => t !== "");
         const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
-        if(!mvList.length) return alert("Add some movies first!");
         const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
-        if (!error) { state = { rid, user: 1, movies: mvList, idx: 0, mySwipes: {} }; startSession(); }
+        if (!error) { state = { ...state, rid, user: 1, movies: mvList }; startSession(); }
     }
+
     async function joinRoom() {
         const rid = document.getElementById('joinID').value.toUpperCase();
         const { data } = await sb.from('rooms').select('*').eq('id', rid).single();
-        if (data) { state = { rid, user: 2, movies: data.movies, idx: 0, mySwipes: {} }; startSession(); }
+        if (data) { state = { ...state, rid, user: 2, movies: data.movies }; startSession(); }
     }
+
     function startSession() {
         showScreen('sw-sc');
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
-        sb.channel('sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => checkMatches(p.new)).subscribe();
+        // REAL-TIME LISTENER: This is what makes it "Instant"
+        sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
+            checkInstantMatch(p.new);
+        }).subscribe();
     }
+
     async function renderCard() {
-        if (state.idx < state.movies.length) {
-            const title = state.movies[state.idx];
-            document.getElementById('ctit').innerText = title;
-            const pbox = document.getElementById('pbox');
-            pbox.innerHTML = "⏳";
-            try {
-                const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-                const data = await res.json();
-                pbox.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
-            } catch { pbox.innerHTML = "🎬"; }
-        } else {
-            showScreen('wait-sc');
-            document.getElementById('share-info').innerText = state.user === 1 ? "SHARE CODE: " + state.rid : "WHAT TO WATCH :)";
-            checkMatches();
+        if (state.idx >= state.movies.length) {
+            document.getElementById('ctit').innerText = "End of list!";
+            return;
         }
+        const title = state.movies[state.idx];
+        document.getElementById('ctit').innerText = title;
+        const pbox = document.getElementById('pbox');
+        pbox.innerHTML = "⏳";
+        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+        const data = await res.json();
+        pbox.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
     }
+
     async function vote(v) {
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         state.idx++; renderCard();
     }
-    async function checkMatches(dbData) {
-        let data = dbData || (await sb.from('rooms').select('*').eq('id', state.rid).single()).data;
+
+    function checkInstantMatch(data) {
         const s1 = data.swipes_1 || {}, s2 = data.swipes_2 || {};
-        if (Object.keys(s1).length === state.movies.length && Object.keys(s2).length === state.movies.length) {
-            const matches = state.movies.filter((m, i) => s1[i] === 'yes' && s2[i] === 'yes');
-            document.getElementById('results-list').innerHTML = matches.map(m => `<div style="background:#333; padding:15px; border-radius:12px; margin-bottom:10px; text-align:center; color:var(--accent); font-size:20px;">${m}</div>`).join('');
-        }
+        // Look for any index where both said 'yes' that we haven't popped up yet
+        state.movies.forEach((movie, i) => {
+            if (s1[i] === 'yes' && s2[i] === 'yes' && !state.matchedIndices.has(i)) {
+                state.matchedIndices.add(i);
+                triggerPopup(movie);
+            }
+        });
     }
+
+    async function triggerPopup(title) {
+        document.getElementById('match-movie-name').innerText = title;
+        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+        const data = await res.json();
+        document.getElementById('match-poster').innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}" style="width:100%; height:100%; object-fit:cover;">` : "🎬";
+        document.getElementById('match-popup').style.display = 'flex';
+    }
+
+    function closeMatch() { document.getElementById('match-popup').style.display = 'none'; }
 </script>
 </body>
 </html>
