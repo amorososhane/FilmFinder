@@ -30,12 +30,17 @@
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
 
-        /* Bumble Conclusion Style Overlay */
+        /* Presence Indicator */
+        .status-area { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .pulse-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88; animation: pulse 2s infinite; display: none; }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
+        .status-txt { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); }
+
         #match-popup {
             position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(10px);
         }
         @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
         .match-title { font-family: 'Playfair Display', serif; font-size: 44px; color: var(--accent); margin-bottom: 10px; }
@@ -65,7 +70,10 @@
     </div>
 
     <div id="sw-sc" class="sc">
-        <div id="roomDisp" style="position:absolute; top:40px; font-size:10px; color:var(--accent); letter-spacing: 2px;"></div>
+        <div class="status-area">
+            <div id="dot" class="pulse-dot"></div>
+            <div id="roomDisp" class="status-txt"></div>
+        </div>
         <div class="mc" id="card">
             <div class="poster-box" id="pbox">🎬</div>
             <div id="ctit" class="ct">Loading...</div>
@@ -89,13 +97,12 @@
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
     const OMDB_KEY = "2399d7cb"; 
 
-    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false };
+    let sb; 
+    let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false, posterCache: {} };
+    
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
     
-    function showScreen(id) { 
-        document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); 
-        document.getElementById(id).classList.add('on'); 
-    }
+    function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
     function handleCSV(input) {
         const reader = new FileReader();
@@ -140,10 +147,31 @@
         showScreen('sw-sc');
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
-        // The real-time listener monitors every swipe for a match
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
+            updatePresence(p.new);
             checkAndLockMatch(p.new);
         }).subscribe();
+    }
+
+    function updatePresence(db) {
+        const partnerCol = state.user === 1 ? 'swipes_2' : 'swipes_1';
+        const partnerSwipes = Object.keys(db[partnerCol] || {}).length;
+        if (partnerSwipes > 0) {
+            document.getElementById('dot').style.display = 'block';
+        }
+    }
+
+    async function fetchPoster(title, index) {
+        if (state.posterCache[index]) return state.posterCache[index];
+        try {
+            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+            const data = await res.json();
+            const url = (data.Poster && data.Poster !== "N/A") ? data.Poster : "🎬";
+            state.posterCache[index] = url;
+            // If it's a real URL, pre-cache the image in the browser
+            if (url !== "🎬") { const img = new Image(); img.src = url; }
+            return url;
+        } catch { return "🎬"; }
     }
 
     async function renderCard() {
@@ -151,12 +179,18 @@
         const title = state.movies[state.idx];
         document.getElementById('ctit').innerText = title;
         const pbox = document.getElementById('pbox');
-        pbox.innerHTML = "⏳";
-        try {
-            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-            const data = await res.json();
-            pbox.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
-        } catch { pbox.innerHTML = "🎬"; }
+
+        // Show cached or fetch
+        const poster = await fetchPoster(title, state.idx);
+        pbox.innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
+
+        // Smart Prefetch: Get next 3 posters while user is looking at this one
+        for (let i = 1; i <= 3; i++) {
+            const nextIdx = state.idx + i;
+            if (nextIdx < state.movies.length) {
+                fetchPoster(state.movies[nextIdx], nextIdx);
+            }
+        }
     }
 
     async function vote(v) {
@@ -165,7 +199,6 @@
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         
-        // After voting, check if this swipe created a match locally for faster feel
         const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
         checkAndLockMatch(data);
 
@@ -176,24 +209,21 @@
     function checkAndLockMatch(db) {
         if (state.isMatched) return;
         const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
-        // Check every movie on the list for a double "yes"
         state.movies.forEach((movie, i) => {
             if (s1[i] === 'yes' && s2[i] === 'yes') {
                 state.isMatched = true; 
-                showMatchScreen(movie);
+                showMatchScreen(movie, i);
             }
         });
     }
 
-    async function showMatchScreen(title) {
+    async function showMatchScreen(title, index) {
         document.getElementById('m-name-fin').innerText = title;
         const mPost = document.getElementById('m-post-fin');
-        mPost.innerHTML = "⏳";
         document.getElementById('match-popup').style.display = 'flex';
         
-        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-        const data = await res.json();
-        mPost.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
+        const poster = await fetchPoster(title, index);
+        mPost.innerHTML = poster === "🎬" ? "🎬" : `<img src="${poster}">`;
     }
 </script>
 </body>
