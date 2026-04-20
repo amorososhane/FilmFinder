@@ -11,37 +11,30 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100%; width: 100%; overflow: hidden; }
         .sm { height: 100vh; width: 100vw; position: relative; }
-        .sc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; opacity: 0; visibility: hidden; transition: opacity .3s ease; }
+        .sc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; opacity: 0; visibility: hidden; transition: opacity .4s ease; }
         .sc.on { opacity: 1; visibility: visible; pointer-events: auto; z-index: 10; }
+        
+        /* Cuter Intro */
         .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: var(--accent); text-align: center; margin-bottom: 8px; }
         .wordmark em { font-style: italic; color: #fff; }
-        .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
-        .btn-g { background: var(--accent); color: #000; border: none; padding: 18px 32px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 50px; width: 100%; max-width: 260px; }
-        .btn-gh { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px; }
-        .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
-        .ta { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; height: 120px; resize: none; font-size: 14px; line-height: 1.6; font-family: inherit; }
-        .csv-box { border: 2px dashed rgba(255, 133, 162, 0.3); padding: 15px; border-radius: 12px; width: 100%; max-width: 260px; text-align: center; color: var(--accent); font-size: 12px; cursor: pointer; margin-bottom: 10px; }
-        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; }
-        .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .poster-box img { width: 100%; height: 100%; object-fit: cover; }
-        .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .swbtns { display: flex; gap: 30px; margin-top: 30px; }
-        .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .swyes { background: var(--accent); color: #000; }
-        .swno { background: #444; color: #fff; }
+        .status-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 10px #00ff88; }
+        .partner-status { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
 
-        /* Bumble Conclusion Style Overlay */
+        .btn-g { background: var(--accent); color: #000; border: none; padding: 18px 32px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 50px; width: 100%; max-width: 260px; box-shadow: 0 10px 20px rgba(255, 133, 162, 0.2); }
+        .btn-gh { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px; }
+        
+        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 30px; width: 310px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); min-height: 440px; display: flex; flex-direction: column; transition: transform 0.3s ease; }
+        .poster-box { width: 100%; height: 300px; background: #111; border-radius: 20px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
+        .poster-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Match UI */
         #match-popup {
-            position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
+            position: fixed; inset: 0; background: #111; z-index: 2000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(15px);
+            animation: matchFringe 0.5s ease-out;
         }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
-        .match-title { font-family: 'Playfair Display', serif; font-size: 44px; color: var(--accent); margin-bottom: 10px; }
-        .match-poster-final { width: 220px; height: 320px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent); box-shadow: 0 0 40px var(--accent); margin: 20px 0; }
-        .match-poster-final img { width: 100%; height: 100%; object-fit: cover; }
-        .found-txt { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        @keyframes matchFringe { from { opacity: 0; filter: blur(20px); } to { opacity: 1; filter: blur(0); } }
+        .match-card { width: 250px; height: 360px; border-radius: 20px; border: 4px solid var(--accent); box-shadow: 0 0 50px var(--accent); margin-bottom: 30px; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -56,19 +49,15 @@
     </div>
 
     <div id="setup-sc" class="sc">
-        <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
-        <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
-        <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
-        <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
-        <button class="btn-gh" style="margin-bottom:10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
-        <button class="btn-g" onclick="createRoom()">Start Swiping</button>
+        <textarea id="mtxt" class="ta" placeholder="Paste movie titles..."></textarea>
+        <button class="btn-g" style="margin-top:20px" onclick="createRoom()">Start Date Night</button>
     </div>
 
     <div id="sw-sc" class="sc">
-        <div id="roomDisp" style="position:absolute; top:40px; font-size:10px; color:var(--accent); letter-spacing: 2px;"></div>
-        <div class="mc" id="card">
+        <div class="partner-status" id="p-stat"><span class="status-dot"></span> Waiting for partner...</div>
+        <div class="mc" id="main-card">
             <div class="poster-box" id="pbox">🎬</div>
-            <div id="ctit" class="ct">Loading...</div>
+            <div id="ctit" class="ct" style="font-family: 'Playfair Display', serif; font-size: 24px; padding: 10px;">Loading...</div>
         </div>
         <div class="swbtns">
             <button class="swb swno" onclick="vote('no')">✕</button>
@@ -77,10 +66,10 @@
     </div>
 
     <div id="match-popup">
-        <div class="found-txt">You matched on</div>
-        <div class="match-poster-final" id="m-post-fin"></div>
-        <div id="m-name-fin" class="match-title" style="font-size: 32px; margin-bottom: 30px;">Movie Title</div>
-        <button class="btn-g" onclick="location.reload()">Start New Session</button>
+        <div style="color:var(--accent); font-size: 12px; letter-spacing: 4px; margin-bottom: 10px;">IT'S A MATCH!</div>
+        <div class="match-card" id="match-img"></div>
+        <div id="match-name" style="font-family: 'Playfair Display'; font-size: 32px; margin-bottom: 40px; color: white;"></div>
+        <button class="btn-g" onclick="location.reload()">New Session</button>
     </div>
 </div>
 
@@ -89,45 +78,17 @@
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
     const OMDB_KEY = "2399d7cb"; 
 
-    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false };
+    let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, preFetched: {} };
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
     
-    function showScreen(id) { 
-        document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); 
-        document.getElementById(id).classList.add('on'); 
-    }
-
-    function handleCSV(input) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const rawLines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
-            let headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("name"));
-            if (headerIdx === -1) return;
-            const headers = rawLines[headerIdx].split(',');
-            const nameIdx = headers.findIndex(h => h.trim().toLowerCase() === "name");
-            const titles = rawLines.slice(headerIdx + 1).map(line => {
-                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                return (cells[nameIdx] || "").replace(/^"|"$/g, '').trim();
-            }).filter(t => t.length > 0);
-            document.getElementById('mtxt').value = titles.join('\n');
-        };
-        reader.readAsText(input.files[0]);
-    }
-
-    function shuffleList() {
-        let titles = document.getElementById('mtxt').value.split('\n').filter(t => t.trim() !== "");
-        for (let i = titles.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [titles[i], titles[j]] = [titles[j], titles[i]];
-        }
-        document.getElementById('mtxt').value = titles.join('\n');
-    }
+    function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
     async function createRoom() {
-        const mvList = document.getElementById('mtxt').value.split('\n').map(t => t.trim()).filter(t => t !== "");
+        const mvList = document.getElementById('mtxt').value.split('\n').filter(t => t.trim() !== "");
         const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
-        if (!error) { state = { ...state, rid, user: 1, movies: mvList }; startSession(); }
+        await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: {} }]);
+        state = { ...state, rid, user: 1, movies: mvList };
+        startSession();
     }
 
     async function joinRoom() {
@@ -138,62 +99,80 @@
 
     function startSession() {
         showScreen('sw-sc');
-        document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
-        // The real-time listener monitors every swipe for a match
+        // Prefetch next 3 movies
+        for(let i=1; i<=3; i++) preFetch(i);
+
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
-            checkAndLockMatch(p.new);
+            updateStatus(p.new);
+            checkMatch(p.new);
         }).subscribe();
     }
 
+    function updateStatus(db) {
+        const otherUser = state.user === 1 ? 'swipes_2' : 'swipes_1';
+        if (Object.keys(db[otherUser] || {}).length > 0) {
+            document.getElementById('p-stat').innerHTML = '<span class="status-dot"></span> Partner is swiping!';
+        }
+    }
+
+    async function preFetch(offset) {
+        const i = state.idx + offset;
+        if (i >= state.movies.length || state.preFetched[i]) return;
+        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(state.movies[i])}&apikey=${OMDB_KEY}`);
+        const data = await res.json();
+        state.preFetched[i] = (data.Poster && data.Poster !== "N/A") ? data.Poster : "🎬";
+    }
+
     async function renderCard() {
-        if (state.idx >= state.movies.length || state.isMatched) return;
         const title = state.movies[state.idx];
         document.getElementById('ctit').innerText = title;
         const pbox = document.getElementById('pbox');
-        pbox.innerHTML = "⏳";
-        try {
+        
+        // Use prefetched or fetch new
+        if (state.preFetched[state.idx]) {
+            pbox.innerHTML = state.preFetched[state.idx] === "🎬" ? "🎬" : `<img src="${state.preFetched[state.idx]}">`;
+        } else {
             const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
             const data = await res.json();
             pbox.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
-        } catch { pbox.innerHTML = "🎬"; }
+        }
+        preFetch(3); // Keep the buffer full
     }
 
     async function vote(v) {
-        if (state.isMatched) return;
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
         
-        // After voting, check if this swipe created a match locally for faster feel
-        const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
-        checkAndLockMatch(data);
-
-        state.idx++; 
-        renderCard();
+        // "Pop" animation
+        const card = document.getElementById('main-card');
+        card.style.transform = v === 'yes' ? 'translateX(100px) rotate(10deg)' : 'translateX(-100px) rotate(-10deg)';
+        card.style.opacity = '0';
+        
+        setTimeout(() => {
+            card.style.transform = 'none';
+            card.style.opacity = '1';
+            state.idx++;
+            renderCard();
+        }, 200);
     }
 
-    function checkAndLockMatch(db) {
-        if (state.isMatched) return;
+    function checkMatch(db) {
         const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
-        // Check every movie on the list for a double "yes"
         state.movies.forEach((movie, i) => {
             if (s1[i] === 'yes' && s2[i] === 'yes') {
-                state.isMatched = true; 
-                showMatchScreen(movie);
+                showMatch(movie);
             }
         });
     }
 
-    async function showMatchScreen(title) {
-        document.getElementById('m-name-fin').innerText = title;
-        const mPost = document.getElementById('m-post-fin');
-        mPost.innerHTML = "⏳";
-        document.getElementById('match-popup').style.display = 'flex';
-        
+    async function showMatch(title) {
+        document.getElementById('match-name').innerText = title;
         const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
         const data = await res.json();
-        mPost.innerHTML = (data.Poster && data.Poster !== "N/A") ? `<img src="${data.Poster}">` : "🎬";
+        document.getElementById('match-img').innerHTML = `<img src="${data.Poster}" style="width:100%;height:100%;object-fit:cover">`;
+        document.getElementById('match-popup').style.display = 'flex';
     }
 </script>
 </body>
