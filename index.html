@@ -35,7 +35,7 @@
             position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
         }
         @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
         .match-title { font-family: 'Playfair Display', serif; font-size: 44px; color: var(--accent); margin-bottom: 10px; }
@@ -91,7 +91,11 @@
 
     let sb; let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false };
     window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
-    function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+    
+    function showScreen(id) { 
+        document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); 
+        document.getElementById(id).classList.add('on'); 
+    }
 
     function handleCSV(input) {
         const reader = new FileReader();
@@ -136,6 +140,7 @@
         showScreen('sw-sc');
         document.getElementById('roomDisp').innerText = "ROOM: " + state.rid;
         renderCard();
+        // The real-time listener monitors every swipe for a match
         sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
             checkAndLockMatch(p.new);
         }).subscribe();
@@ -159,15 +164,22 @@
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
-        state.idx++; renderCard();
+        
+        // After voting, check if this swipe created a match locally for faster feel
+        const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
+        checkAndLockMatch(data);
+
+        state.idx++; 
+        renderCard();
     }
 
     function checkAndLockMatch(db) {
         if (state.isMatched) return;
         const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
+        // Check every movie on the list for a double "yes"
         state.movies.forEach((movie, i) => {
             if (s1[i] === 'yes' && s2[i] === 'yes') {
-                state.isMatched = true; // Lock the UI
+                state.isMatched = true; 
                 showMatchScreen(movie);
             }
         });
@@ -176,6 +188,7 @@
     async function showMatchScreen(title) {
         document.getElementById('m-name-fin').innerText = title;
         const mPost = document.getElementById('m-post-fin');
+        mPost.innerHTML = "⏳";
         document.getElementById('match-popup').style.display = 'flex';
         
         const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
