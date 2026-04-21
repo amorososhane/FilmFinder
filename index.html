@@ -321,10 +321,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
   <div class="rr-eyebrow">Tonight you're watching</div>
   <div class="rr-title" id="rr-title">—</div>
   <div id="rr-poster-wrap"></div>
-  <div class="rr-meta" id="rr-meta"></div>
-  <p class="rr-plot" id="rr-plot"></p>
-  <div class="rr-details" id="rr-details"></div>
-  <div class="rr-imdb" id="rr-imdb"></div>
+  <div id="rr-details-container"></div> 
   <div class="rr-actions">
     <button class="rr-again" onclick="spinAgain()">Spin Again</button>
     <button class="rr-new" onclick="location.reload()">New Session</button>
@@ -333,6 +330,17 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 
 </div>
 <script>
+let spinCount = 0; 
+
+function getSeededRandom(seed, shift = 0) {
+  let hash = 0;
+  const str = seed + String(shift);
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 1000) / 1000;
+}
 const SB_URL='https://sndrnxxmdjryqfnjzwsf.supabase.co';
 const SB_KEY='sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O';
 const OMDB_KEY='2399d7cb';
@@ -464,14 +472,11 @@ async function discoverMovies(){
     }));
     genres.forEach(g=>titles.push(...(gr[g]||[])));
   }
-  const trimmed=titles.slice(0,30);
-  document.getElementById('mtxt').value=trimmed.join('\n');
-  if(document.getElementById('ta-wrap').style.display!=='block'){
-    document.getElementById('ta-wrap').style.display='block';
-    document.getElementById('manual-trigger').innerText='− Hide list';
-  }
-  lt.textContent=trimmed.length===0?'No results — adjust filters':`✦ ${trimmed.length} titles ready`;
-  b.disabled=false;updateDiscoverBtn();
+const trimmed = titles.slice(0, 30);
+  document.getElementById('mtxt').value = trimmed.join('\n');
+  
+  lt.textContent = trimmed.length === 0 ? 'No results — adjust filters' : `✦ ${trimmed.length} titles ready`;
+  b.disabled = false;
 }
 
 function handleCSV(input){
@@ -600,229 +605,235 @@ async function showMatchScreen(title,index){
 }
 
 /* ══ ROULETTE ══ */
-async function createRouletteRoom(){
-  try{
-    const rid='R'+Math.random().toString(36).substring(2,5).toUpperCase();
-    const{error}=await sb.from('rooms').insert([{
-      id:rid,movies:[],
-      swipes_1:{roulette:true,movies:[],ready:false},
-      swipes_2:null
-    }]);
-    if(error){console.error(error);alert('Could not create room: '+error.message);return;}
-    rState.rid=rid;rState.user=1;rState.movies=[];
-    document.getElementById('r-room-code').innerText=rid;
-    document.getElementById('r-partner-dot').classList.remove('online');
-    document.getElementById('r-partner-txt').innerText='Waiting for partner…';
-    document.getElementById('r-waiting-txt').innerText='';
-    const btn=document.getElementById('r-ready-btn');
-    btn.disabled=true;btn.textContent="I'm Ready to Spin";
-    renderRouletteList();
-    showScreen('roulette-setup-sc');
-    subscribeRouletteRoom();
-  }catch(e){console.error(e);alert('Error: '+e.message);}
-}
 
+async function createRouletteRoom(){
+  const rid='R'+Math.random().toString(36).substring(2,5).toUpperCase();
+  await sb.from('rooms').insert([{id:rid,swipes_1:{movies:[],ready:false},swipes_2:{movies:[],ready:false}}]);
+  rState.rid=rid;rState.user=1;
+  initRouletteUI();
+}
+ 
 async function joinRouletteRoom(){
   const rid=document.getElementById('rJoinID').value.toUpperCase().trim();
-  if(!rid)return;
-  const{data,error}=await sb.from('rooms').select('*').eq('id',rid).single();
-  if(!data){alert('Room not found.');console.error(error);return;}
+  const{data}=await sb.from('rooms').select('*').eq('id',rid).single();
+  if(!data)return alert('No room found');
   rState.rid=rid;rState.user=2;
-  const p1Movies=(data.swipes_1||{}).movies||[];
-  rState.movies=[...p1Movies];
-  await sb.from('rooms').update({swipes_2:{roulette:true,movies:[],ready:false}}).eq('id',rid);
-  document.getElementById('r-room-code').innerText=rid;
-  document.getElementById('r-partner-dot').classList.add('online');
-  document.getElementById('r-partner-txt').innerText='Partner is online';
-  document.getElementById('r-waiting-txt').innerText='';
-  const btn=document.getElementById('r-ready-btn');
-  btn.disabled=true;btn.textContent="I'm Ready to Spin";
-  renderRouletteList();
+  // Seed local movies from existing data
+  const u1=(data.swipes_1||{}).movies||[];
+  const u2=(data.swipes_2||{}).movies||[];
+  rState.movies=[...new Set([...u1,...u2])];
+  renderRoulettelist();
+  initRouletteUI();
+}
+ 
+function initRouletteUI(){
+  document.getElementById('r-room-code').innerText=rState.rid;
   showScreen('roulette-setup-sc');
-  subscribeRouletteRoom();
-}
-
-function subscribeRouletteRoom(){
   if(rState.channel)rState.channel.unsubscribe();
-  rState.channel=sb.channel('roulette-'+rState.rid)
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`id=eq.${rState.rid}`},p=>{
-      handleRouletteUpdate(p.new);
-    }).subscribe();
+  rState.channel=sb.channel('r-'+rState.rid).on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`id=eq.${rState.rid}`},p=>{
+    handleRouletteUpdate(p.new);
+  }).subscribe();
 }
-
-function handleRouletteUpdate(db){
-  const me=rState.user===1?db.swipes_1:db.swipes_2;
-  const partner=rState.user===1?db.swipes_2:db.swipes_1;
-  if(partner){
-    document.getElementById('r-partner-dot').classList.add('online');
-    document.getElementById('r-partner-txt').innerText=partner.ready?'Partner is ready!':'Partner is online';
-  }
-  const myMovies=(me||{}).movies||[];
-  const partnerMovies=(partner||{}).movies||[];
-  rState.movies=[...new Set([...myMovies,...partnerMovies])];
-  renderRouletteList();
-  if((me||{}).ready&&(partner||{}).ready)launchRouletteSpin();
-}
-
+ 
 async function addRouletteMovie(){
   const inp=document.getElementById('r-movie-inp');
   const title=inp.value.trim();
   if(!title)return;
   inp.value='';
   const col=rState.user===1?'swipes_1':'swipes_2';
-  const{data}=await sb.from('rooms').select('*').eq('id',rState.rid).single();
-  const colData=data[col]||{roulette:true,movies:[],ready:false};
-  if(!colData.movies.includes(title))colData.movies.push(title);
-  await sb.from('rooms').update({[col]:colData}).eq('id',rState.rid);
-  if(!rState.movies.includes(title))rState.movies.push(title);
-  renderRouletteList();
+  const{data}=await sb.from('rooms').select(col).eq('id',rState.rid).single();
+  let userData=data[col]||{movies:[],ready:false};
+  if(!userData.movies.includes(title)){
+    userData.movies.push(title);
+    await sb.from('rooms').update({[col]:userData}).eq('id',rState.rid);
+  }
 }
-
-async function removeRouletteMovie(title){
-  const col=rState.user===1?'swipes_1':'swipes_2';
-  const{data}=await sb.from('rooms').select('*').eq('id',rState.rid).single();
-  const colData=data[col]||{roulette:true,movies:[],ready:false};
-  colData.movies=colData.movies.filter(m=>m!==title);
-  await sb.from('rooms').update({[col]:colData}).eq('id',rState.rid);
-  rState.movies=rState.movies.filter(m=>m!==title);
-  renderRouletteList();
+ 
+function handleRouletteUpdate(db){
+  const u1=db.swipes_1||{movies:[],ready:false};
+  const u2=db.swipes_2||{movies:[],ready:false};
+  const me=rState.user===1?u1:u2;
+  const partner=rState.user===1?u2:u1;
+ 
+  if(partner){
+    document.getElementById('r-partner-dot').classList.add('online');
+    document.getElementById('r-partner-txt').innerText=partner.ready?'Partner is ready!':'Partner is adding...';
+  }
+ 
+  const combined=[...new Set([...(u1.movies||[]),...(u2.movies||[])])];
+  rState.movies=combined;
+  renderRoulettelist();
+ 
+  if(!me.ready)document.getElementById('r-ready-btn').disabled=combined.length<2;
+  if(u1.ready&&u2.ready)autoLaunchAndSpin();
 }
-
-function renderRouletteList(){
+ 
+function renderRoulettelist(){
   const list=document.getElementById('r-list');
-  const empty=document.getElementById('r-empty');
   list.innerHTML='';
   if(rState.movies.length===0){
-    empty.style.display='block';list.appendChild(empty);
-  }else{
-    empty.style.display='none';
-    rState.movies.forEach(title=>{
-      const item=document.createElement('div');
-      item.className='r-list-item';
-      item.innerHTML=`<span>${title}</span><button onclick="removeRouletteMovie(${JSON.stringify(title)})">✕</button>`;
-      list.appendChild(item);
-    });
+    list.innerHTML='<div class="r-empty">No movies yet</div>';
+    return;
   }
-  document.getElementById('r-ready-btn').disabled=rState.movies.length<2;
+  rState.movies.forEach(m=>{
+    const item=document.createElement('div');
+    item.className='r-list-item';
+    item.innerHTML=`<span>${m}</span>`;
+    list.appendChild(item);
+  });
 }
-
+ 
 async function setRouletteReady(){
   const col=rState.user===1?'swipes_1':'swipes_2';
-  const{data}=await sb.from('rooms').select('*').eq('id',rState.rid).single();
-  const colData=data[col]||{roulette:true,movies:[],ready:false};
-  colData.ready=true;
-  await sb.from('rooms').update({[col]:colData}).eq('id',rState.rid);
-  const partner=rState.user===1?data.swipes_2:data.swipes_1;
-  if(partner&&partner.ready){
-    launchRouletteSpin();
-  }else{
-    const btn=document.getElementById('r-ready-btn');
-    btn.disabled=true;btn.textContent='✓ Ready';
-    document.getElementById('r-waiting-txt').textContent='Waiting for partner…';
-  }
+  const{data}=await sb.from('rooms').select(col).eq('id',rState.rid).single();
+  let userData=data[col];
+  userData.ready=true;
+  await sb.from('rooms').update({[col]:userData}).eq('id',rState.rid);
+  const btn=document.getElementById('r-ready-btn');
+  btn.disabled=true;btn.innerText='✓ Ready';
+  document.getElementById('r-waiting-txt').innerText='Waiting for partner…';
 }
-
-function launchRouletteSpin(){
+ 
+function autoLaunchAndSpin(){
   if(document.getElementById('roulette-spin-sc').classList.contains('on'))return;
+  // Reset wheel state before launching
   wheelAngle=0;
+  isSpinning=false;
   drawWheel(rState.movies,0);
   document.getElementById('spin-title').innerText='Ready to spin?';
-  document.getElementById('spin-btn').disabled=false;
+  const btn=document.getElementById('spin-btn');
+  btn.disabled=true;
+  btn.innerText='Starting…';
   showScreen('roulette-spin-sc');
+  setTimeout(()=>spinWheel(),1200);
 }
-
+ 
+/* ── Wheel drawing ── */
 const WHEEL_COLORS=['#ff85a2','#c9748e','#ff9eb5','#a85c6d','#ffb3c6','#d46b83','#ff6e92','#b34d66'];
-
+ 
 function drawWheel(movies,angle){
   const canvas=document.getElementById('wheel-canvas');
-  if(!canvas)return;
+  if(!canvas||!movies||movies.length===0)return;
   const ctx=canvas.getContext('2d');
   const cx=135,cy=135,r=125;
   ctx.clearRect(0,0,270,270);
-  if(!movies||movies.length===0)return;
   const slice=(2*Math.PI)/movies.length;
-  movies.forEach((title,i)=>{
+  movies.forEach((m,i)=>{
     const start=angle+i*slice-Math.PI/2;
     const end=start+slice;
     ctx.beginPath();ctx.moveTo(cx,cy);
     ctx.arc(cx,cy,r,start,end);ctx.closePath();
     ctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length];ctx.fill();
-    ctx.strokeStyle='#141414';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.strokeStyle='#141414';ctx.lineWidth=1.2;ctx.stroke();
     ctx.save();ctx.translate(cx,cy);ctx.rotate(start+slice/2);
     ctx.textAlign='right';
     ctx.fillStyle=i%2===0?'#000':'#fff';
-    ctx.font=`500 ${Math.min(11,Math.max(8,100/movies.length))}px DM Sans,sans-serif`;
-    ctx.fillText(title.length>14?title.slice(0,13)+'…':title,r-8,4);
+    ctx.font=`600 ${Math.min(10,Math.max(7,100/movies.length))}px DM Sans,sans-serif`;
+    ctx.fillText(m.length>14?m.slice(0,13)+'…':m,r-8,4);
     ctx.restore();
   });
-  ctx.beginPath();ctx.arc(cx,cy,14,0,2*Math.PI);
+  // Center dot
+  ctx.beginPath();ctx.arc(cx,cy,13,0,2*Math.PI);
   ctx.fillStyle='#141414';ctx.fill();
-  ctx.strokeStyle='rgba(255,133,162,0.35)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.strokeStyle='rgba(255,133,162,0.35)';ctx.lineWidth=1.2;ctx.stroke();
 }
+ 
+function spinWheel() {
+  if (isSpinning || !rState.movies || rState.movies.length < 2) return;
+  isSpinning = true;
+  document.getElementById('spin-btn').disabled = true;
+  document.getElementById('spin-title').innerText = 'Spinning…';
 
-function spinWheel(){
-  if(isSpinning||rState.movies.length<2)return;
-  isSpinning=true;
-  document.getElementById('spin-btn').disabled=true;
-  document.getElementById('spin-title').innerText='Spinning…';
-  const movies=rState.movies;
-  const slice=(2*Math.PI)/movies.length;
-  const extra=6+Math.floor(Math.random()*4);
-  const targetIdx=Math.floor(Math.random()*movies.length);
-  const targetAngle=-(targetIdx*slice+slice/2);
-  const totalRotation=extra*2*Math.PI+targetAngle-(wheelAngle%(2*Math.PI));
-  const duration=4000+Math.random()*1000;
-  const startAngle=wheelAngle,endAngle=startAngle+totalRotation;
-  const startTime=performance.now();
-  const easeOut=t=>1-Math.pow(1-t,4);
-  function frame(now){
-    const t=Math.min((now-startTime)/duration,1);
-    wheelAngle=startAngle+totalRotation*easeOut(t);
-    drawWheel(movies,wheelAngle);
-    if(t<1){requestAnimationFrame(frame);}
-    else{
-      wheelAngle=endAngle;isSpinning=false;
-      rState.spinResult=movies[targetIdx];
-      setTimeout(()=>showRouletteResult(movies[targetIdx]),500);
+  const movies = rState.movies;
+  const slice = (2 * Math.PI) / movies.length;
+
+  // KEY CHANGE: This ensures the result is identical but different every spin
+  const seededValue = getSeededRandom(rState.rid, spinCount);
+  const targetIdx = Math.floor(seededValue * movies.length);
+  
+  const extraRotations = 6; 
+  const targetAngle = -(targetIdx * slice + slice / 2);
+  const totalRotation = extraRotations * 2 * Math.PI + targetAngle - (wheelAngle % (2 * Math.PI));
+  
+  const duration = 4500; 
+  const startAngle = wheelAngle;
+  const endAngle = startAngle + totalRotation;
+  const startTime = performance.now();
+  const easeOut = t => 1 - Math.pow(1 - t, 4);
+
+  function frame(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    wheelAngle = startAngle + totalRotation * easeOut(t);
+    drawWheel(movies, wheelAngle);
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      wheelAngle = endAngle;
+      isSpinning = false;
+      rState.spinResult = movies[targetIdx];
+      setTimeout(() => showRouletteResult(movies[targetIdx]), 600);
     }
   }
   requestAnimationFrame(frame);
 }
+/* ── Roulette result — full poster + details ── */
+async function showRouletteResult(title) {
+  document.getElementById('rr-title').innerText = title;
+  const resultSc = document.getElementById('roulette-result');
+  resultSc.style.display = 'flex';
+  
+  const posterWrap = document.getElementById('rr-poster-wrap');
+  const detailsCont = document.getElementById('rr-details-container');
+  
+  posterWrap.innerHTML = '<div style="font-size:12px; color:var(--muted)">Loading details...</div>';
+  detailsCont.innerHTML = ''; // Clear previous
 
-async function showRouletteResult(title){
-  document.getElementById('rr-title').innerText=title;
-  document.getElementById('roulette-result').style.display='flex';
-  document.getElementById('rr-meta').innerHTML='';
-  document.getElementById('rr-plot').innerText='';
-  document.getElementById('rr-details').innerHTML='';
-  document.getElementById('rr-imdb').innerHTML='';
-  document.getElementById('rr-poster-wrap').innerHTML='<div class="rr-poster-empty">🎬</div>';
-  try{
-    const res=await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-    const d=await res.json();
-    if(d.Poster&&d.Poster!=='N/A')
-      document.getElementById('rr-poster-wrap').innerHTML=`<div class="rr-poster"><img src="${d.Poster}"></div>`;
-    const tags=[d.Year,d.Runtime,d.Rated,...(d.Genre?d.Genre.split(', '):[])].filter(t=>t&&t!=='N/A');
-    document.getElementById('rr-meta').innerHTML=tags.map(t=>`<span class="rr-tag">${t}</span>`).join('');
-    if(d.Plot&&d.Plot!=='N/A')document.getElementById('rr-plot').innerText=d.Plot;
-    const rows=[];
-    if(d.Director&&d.Director!=='N/A')rows.push(`Director <span>${d.Director}</span>`);
-    if(d.Writer&&d.Writer!=='N/A')rows.push(`Writer <span>${d.Writer.split(',')[0].trim()}</span>`);
-    if(d.Actors&&d.Actors!=='N/A')rows.push(`Cast <span>${d.Actors}</span>`);
-    if(d.Country&&d.Country!=='N/A')rows.push(`Country <span>${d.Country}</span>`);
-    if(d.Language&&d.Language!=='N/A')rows.push(`Language <span>${d.Language}</span>`);
-    if(d.Awards&&d.Awards!=='N/A')rows.push(`Awards <span>${d.Awards}</span>`);
-    document.getElementById('rr-details').innerHTML=rows.map(r=>`<div class="rr-row">${r}</div>`).join('');
-    if(d.imdbRating&&d.imdbRating!=='N/A')
-      document.getElementById('rr-imdb').innerHTML=`IMDb <span>★ ${d.imdbRating}</span>`;
-  }catch(e){console.error(e);}
+  try {
+    const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+    const d = await res.json();
+    
+    if (d.Response === "True") {
+      // Set Poster
+      posterWrap.innerHTML = `<img src="${d.Poster !== 'N/A' ? d.Poster : ''}" style="width:160px; border-radius:12px; margin-bottom:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+      
+      // Set Details
+      detailsCont.innerHTML = `
+        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px; font-size:11px; color:var(--accent); font-weight:500; text-transform:uppercase;">
+          <span>${d.Year}</span><span>•</span><span>${d.Runtime}</span><span>•</span><span style="color:#f5c518">★ ${d.imdbRating}</span>
+        </div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.6); line-height:1.5; max-width:280px; margin:0 auto 15px auto; padding:0 10px;">
+          ${d.Plot !== 'N/A' ? d.Plot : 'No description available.'}
+        </div>
+        <div style="font-size:10px; color:var(--muted); margin-bottom:20px;">Directed by <span style="color:#fff">${d.Director}</span></div>
+      `;
+    } else {
+      posterWrap.innerHTML = '🎬';
+      detailsCont.innerHTML = '<div style="font-size:10px; color:var(--muted)">Details not found</div>';
+    }
+  } catch (e) {
+    console.error("Fetch error:", e);
+    posterWrap.innerHTML = '🎬';
+  }
 }
-
-function spinAgain(){
-  document.getElementById('roulette-result').style.display='none';
-  document.getElementById('spin-btn').disabled=false;
-  document.getElementById('spin-title').innerText='Spin again?';
+/* ── Spin Again — go back to wheel and spin a new pick ── */
+function spinAgain() {
+  // Move to the next movie in the deterministic sequence
+  spinCount++; 
+  
+  document.getElementById('roulette-result').style.display = 'none';
+  wheelAngle = 0;
+  isSpinning = false;
+  document.getElementById('spin-title').innerText = 'Ready to spin?';
+  
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = false;
+  btn.innerText = 'Spin';
+  
+  drawWheel(rState.movies, 0);
   showScreen('roulette-spin-sc');
+  
+  // Optional: If you want it to start spinning immediately when one person clicks
+  setTimeout(() => spinWheel(), 1000);
 }
 </script>
 </body>
