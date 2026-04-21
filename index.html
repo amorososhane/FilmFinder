@@ -70,6 +70,18 @@
         .discover-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; font-size: 12px; font-weight: 500; letter-spacing: .05em; }
         .discover-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .loading-txt { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: .1em; margin-top: 8px; min-height: 16px; }
+
+        /* Year range slider */
+        .year-filter { width: 100%; max-width: 260px; margin-bottom: 16px; }
+        .year-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .year-labels span { font-size: 11px; color: rgba(255,255,255,0.35); }
+        .year-labels strong { font-size: 13px; color: var(--accent); font-weight: 500; }
+        .range-wrap { position: relative; height: 28px; display: flex; align-items: center; }
+        .range-track { position: absolute; left: 0; right: 0; height: 3px; background: #3a3a3a; border-radius: 2px; }
+        .range-fill { position: absolute; height: 3px; background: var(--accent); border-radius: 2px; pointer-events: none; }
+        .range-wrap input[type=range] { position: absolute; width: 100%; pointer-events: none; appearance: none; -webkit-appearance: none; background: transparent; height: 3px; }
+        .range-wrap input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 3px solid #1a1a1a; cursor: pointer; pointer-events: all; box-shadow: 0 0 0 2px rgba(255,133,162,0.3); }
+        .range-wrap input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 3px solid #1a1a1a; cursor: pointer; pointer-events: all; }
     </style>
 </head>
 <body>
@@ -89,13 +101,28 @@
         <!-- Genre Discover -->
         <div class="discover-label">Discover by genre</div>
         <div class="genre-chips" id="genre-chips"></div>
+
+        <!-- Year Range Slider -->
+        <div class="year-filter">
+            <div class="year-labels">
+                <span>Year range</span>
+                <strong id="year-display"></strong>
+            </div>
+            <div class="range-wrap">
+                <div class="range-track"></div>
+                <div class="range-fill" id="range-fill"></div>
+                <input type="range" id="year-min" min="1970" value="2000" step="1" oninput="updateYearRange()">
+                <input type="range" id="year-max" min="1970" value="" step="1" oninput="updateYearRange()">
+            </div>
+        </div>
+
         <button class="discover-btn" id="discover-btn" onclick="discoverMovies()" disabled>✦ Generate 30 Movies</button>
         <div class="loading-txt" id="loading-txt"></div>
 
         <div class="or-divider"><span>or add your own</span></div>
 
         <!-- Manual entry (unchanged) -->
-        <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist from Letterboxd (CSV)</div>
+        <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist from Letterboxd(CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
         <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
         <button class="btn-gh" style="margin-bottom:10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
@@ -141,9 +168,9 @@
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
     const OMDB_KEY = "2399d7cb";
-    const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzODVmNGZkNDdlYzc5MzE0YjJmZjdlZjBhNTk3MTBmOCIsIm5iZiI6MTc0Njc0NDQyNy41Njc2MTYsInN1YiI6IjY4MjZkNDg3ZDhkZGFiMWY1YmRmN2MzYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.m7hmBWdAFNGL5r6RIMT6xwnVUpU7TxSn9rUnS2aEPz8";
+    const TMDB_KEY = "385f4fd47ec79314b2ff7ef0a59710f8";
+    const CURRENT_YEAR = new Date().getFullYear();
 
-    // TMDB genre ID map
     const TMDB_GENRES = {
         "Action":      28,
         "Romance":     10749,
@@ -165,7 +192,16 @@
 
     window.onload = () => {
         if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY);
+
+        // Set dynamic year max
+        const minEl = document.getElementById('year-min');
+        const maxEl = document.getElementById('year-max');
+        minEl.max = CURRENT_YEAR;
+        maxEl.max = CURRENT_YEAR;
+        maxEl.value = CURRENT_YEAR;
+
         buildChips();
+        updateYearRange();
     };
 
     function buildChips() {
@@ -190,11 +226,39 @@
         document.getElementById('discover-btn').disabled = selectedGenres.size === 0;
     }
 
+    function updateYearRange() {
+        const minEl = document.getElementById('year-min');
+        const maxEl = document.getElementById('year-max');
+        let minVal = parseInt(minEl.value);
+        let maxVal = parseInt(maxEl.value);
+
+        if (minVal >= maxVal) {
+            if (document.activeElement === minEl) {
+                minEl.value = maxVal - 1;
+                minVal = maxVal - 1;
+            } else {
+                maxEl.value = minVal + 1;
+                maxVal = minVal + 1;
+            }
+        }
+
+        document.getElementById('year-display').textContent = `${minVal} – ${maxVal}`;
+
+        const total = CURRENT_YEAR - 1970;
+        const leftPct = ((minVal - 1970) / total) * 100;
+        const rightPct = ((maxVal - 1970) / total) * 100;
+        document.getElementById('range-fill').style.left = leftPct + '%';
+        document.getElementById('range-fill').style.width = (rightPct - leftPct) + '%';
+    }
+
     async function discoverMovies() {
         const btn = document.getElementById('discover-btn');
         const loadTxt = document.getElementById('loading-txt');
         btn.disabled = true;
         loadTxt.textContent = 'Fetching movies...';
+
+        const yearMin = document.getElementById('year-min').value;
+        const yearMax = document.getElementById('year-max').value;
 
         const TARGET = 30;
         const genres = [...selectedGenres];
@@ -210,8 +274,7 @@
             while (titles.length < perGenre + 5 && page <= 3) {
                 try {
                     const res = await fetch(
-                        `https://api.themoviedb.org/3/discover/movie?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=500&page=${page}`,
-                        { headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json' } }
+                        `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=200&primary_release_date.gte=${yearMin}-01-01&primary_release_date.lte=${yearMax}-12-31&page=${page}`
                     );
                     const data = await res.json();
                     if (data.results) {
@@ -226,7 +289,6 @@
                 page++;
             }
 
-            // Shuffle within genre
             for (let i = titles.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [titles[i], titles[j]] = [titles[j], titles[i]];
@@ -234,7 +296,6 @@
             genreResults[genre] = titles.slice(0, perGenre);
         }));
 
-        // Keep genres grouped
         const final = [];
         genres.forEach(genre => final.push(...(genreResults[genre] || [])));
         const trimmed = final.slice(0, TARGET);
