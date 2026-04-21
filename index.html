@@ -693,29 +693,36 @@ function handleRouletteUpdate(db){
   rState.movies=combined;
   renderRoulettelist();
  
-  // FIX: User can click ready regardless of partner, as long as they haven't clicked it yet
-  const readyBtn = document.getElementById('r-ready-btn');
-  if(!me.ready) {
-    readyBtn.disabled = combined.length < 2;
-    readyBtn.innerText = "I'm Ready to Spin";
-  } else {
-    readyBtn.disabled = true;
-    readyBtn.innerText = '✓ Ready';
-    document.getElementById('r-waiting-txt').innerText = 'Waiting for partner…';
-  }
-
-  // Only auto-launch if BOTH are ready
-  if(u1.ready && u2.ready) autoLaunchAndSpin();
+  if(!me.ready)document.getElementById('r-ready-btn').disabled=combined.length<2;
+  if(u1.ready&&u2.ready)autoLaunchAndSpin();
 }
+ 
+function renderRoulettelist(){
+  const list=document.getElementById('r-list');
+  list.innerHTML='';
+  if(rState.movies.length===0){
+    list.innerHTML='<div class="r-empty">No movies yet</div>';
+    return;
+  }
+  rState.movies.forEach(m=>{
+    const item=document.createElement('div');
+    item.className='r-list-item';
+    item.innerHTML=`<span>${m}</span>`;
+    list.appendChild(item);
+  });
+}
+ 
 async function setRouletteReady(){
   const col=rState.user===1?'swipes_1':'swipes_2';
-  // Get latest data to ensure we don't overwrite movies
   const{data}=await sb.from('rooms').select(col).eq('id',rState.rid).single();
-  let userData=data[col] || {movies:[], ready:false};
+  let userData=data[col];
   userData.ready=true;
-  
   await sb.from('rooms').update({[col]:userData}).eq('id',rState.rid);
+  const btn=document.getElementById('r-ready-btn');
+  btn.disabled=true;btn.innerText='✓ Ready';
+  document.getElementById('r-waiting-txt').innerText='Waiting for partner…';
 }
+ 
 function autoLaunchAndSpin(){
   if(document.getElementById('roulette-spin-sc').classList.contains('on'))return;
   wheelAngle=0;
@@ -869,23 +876,22 @@ async function showRouletteResult(title) {
   }
 }
 /* ── Spin Again — go back to wheel and spin a new pick ── */
-async function spinAgain() {
-  spinCount++; 
-  const col = rState.user === 1 ? 'swipes_1' : 'swipes_2';
-  
-  // Reset my ready status to false in DB
-  const { data } = await sb.from('rooms').select(col).eq('id', rState.rid).single();
-  let userData = data[col];
-  userData.ready = false; 
-  
-  await sb.from('rooms').update({ [col]: userData }).eq('id', rState.rid);
+function spinAgain() {
+  spinCount++; // increment FIRST so the next getSeededRandom call uses a fresh seed
 
-  // UI Reset
   document.getElementById('roulette-result').style.display = 'none';
-  document.getElementById('r-waiting-txt').innerText = '';
+  wheelAngle = 0;
+  isSpinning = false;
+  document.getElementById('spin-title').innerText = 'Ready to spin?';
   
-  // Return to lobby; handleRouletteUpdate will trigger spin when BOTH are ready again
-  showScreen('roulette-setup-sc');
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = false;
+  btn.innerText = 'Spin the wheel';
+  
+  drawWheel(rState.movies, 0);
+  showScreen('roulette-spin-sc');
+  
+  setTimeout(() => spinWheel(), 1000);
 }
 </script>
 </body>
