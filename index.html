@@ -11,7 +11,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100%; width: 100%; overflow: hidden; }
         .sm { height: 100vh; width: 100vw; position: relative; }
-        .sc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; opacity: 0; visibility: hidden; transition: opacity .3s ease; }
+        .sc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; opacity: 0; visibility: hidden; transition: opacity .3s ease; overflow-y: auto; }
         .sc.on { opacity: 1; visibility: visible; pointer-events: auto; z-index: 10; }
         .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: var(--accent); text-align: center; margin-bottom: 8px; }
         .wordmark em { font-style: italic; color: #fff; }
@@ -22,18 +22,15 @@
         .ta { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; height: 120px; resize: none; font-size: 14px; line-height: 1.6; font-family: inherit; }
         .csv-box { border: 2px dashed rgba(255, 133, 162, 0.3); padding: 15px; border-radius: 12px; width: 100%; max-width: 260px; text-align: center; color: var(--accent); font-size: 12px; cursor: pointer; margin-bottom: 10px; }
 
-        /* Card flip styles */
+        /* Card flip */
         .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; cursor: pointer; perspective: 1000px; }
         .card-inner { position: relative; width: 100%; flex: 1; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); min-height: 360px; }
         .card-inner.flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; }
         .card-back { transform: rotateY(180deg); justify-content: flex-start; gap: 10px; text-align: left; padding-top: 4px; overflow: hidden; }
-
         .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .poster-box img { width: 100%; height: 100%; object-fit: cover; }
         .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-
-        /* Back face styles */
         .back-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--accent); line-height: 1.2; margin-bottom: 2px; }
         .back-meta { display: flex; gap: 6px; flex-wrap: wrap; }
         .back-tag { background: rgba(255,133,162,0.12); color: var(--accent); font-size: 10px; padding: 3px 8px; border-radius: 20px; letter-spacing: .05em; }
@@ -48,24 +45,31 @@
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
 
-        /* Presence & Status UI */
+        /* Presence & Status */
         .status-header { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .pulse-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 12px #00ff88; animation: heartbeat 2s infinite; display: none; }
         @keyframes heartbeat { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
         .room-tag { font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; }
 
         /* Match Overlay */
-        #match-popup {
-            position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(12px);
-        }
+        #match-popup { position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(12px); }
         @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
         .match-title { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--accent); margin-bottom: 30px; }
         .match-poster-final { width: 220px; height: 320px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent); box-shadow: 0 0 40px rgba(255, 133, 162, 0.4); margin: 20px 0; }
         .match-poster-final img { width: 100%; height: 100%; object-fit: cover; }
         .found-txt { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+
+        /* Genre discover UI */
+        .or-divider { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 260px; margin: 16px 0; }
+        .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+        .or-divider span { font-size: 10px; letter-spacing: .2em; color: rgba(255,255,255,0.2); text-transform: uppercase; }
+        .discover-label { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 12px; align-self: flex-start; max-width: 260px; width: 100%; }
+        .genre-chips { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; max-width: 260px; margin-bottom: 14px; }
+        .chip { background: #2e2e2e; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); font-size: 12px; padding: 7px 14px; border-radius: 50px; cursor: pointer; transition: all .2s; user-select: none; }
+        .chip.active { background: rgba(255,133,162,0.15); border-color: var(--accent); color: var(--accent); }
+        .discover-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; font-size: 12px; font-weight: 500; letter-spacing: .05em; }
+        .discover-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .loading-txt { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: .1em; margin-top: 8px; min-height: 16px; }
     </style>
 </head>
 <body>
@@ -81,6 +85,16 @@
 
     <div id="setup-sc" class="sc">
         <div class="wordmark" style="font-size: 24px; margin-bottom: 20px;">Movies</div>
+
+        <!-- Genre Discover -->
+        <div class="discover-label">Discover by genre</div>
+        <div class="genre-chips" id="genre-chips"></div>
+        <button class="discover-btn" id="discover-btn" onclick="discoverMovies()" disabled>✦ Generate 30 Movies</button>
+        <div class="loading-txt" id="loading-txt"></div>
+
+        <div class="or-divider"><span>or add your own</span></div>
+
+        <!-- Manual entry (unchanged) -->
         <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
         <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
@@ -93,7 +107,6 @@
             <div id="dot" class="pulse-dot"></div>
             <div id="roomDisp" class="room-tag"></div>
         </div>
-        <!-- onclick toggles flip; swipe buttons stop propagation so they don't flip -->
         <div class="mc" id="main-card" onclick="document.getElementById('card-inner').classList.toggle('flipped')">
             <div class="card-inner" id="card-inner">
                 <div class="card-front">
@@ -127,13 +140,107 @@
 <script>
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const OMDB_KEY = "2399d7cb"; 
+    const OMDB_KEY = "2399d7cb";
 
-    let sb; 
+    let sb;
     let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false, cache: {} };
-    
-    window.onload = () => { if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY); };
-    
+
+    // Genre → curated OMDB search terms (each returns up to 10 results via &type=movie&s=)
+    const GENRE_QUERIES = {
+        "Action":    ["action hero 2022", "action thriller 2023", "spy action film"],
+        "Romance":   ["romantic drama 2022", "love story 2023", "romance comedy film"],
+        "Comedy":    ["comedy 2023", "funny movie 2022", "comedy film 2021"],
+        "Horror":    ["horror 2023", "scary movie 2022", "horror thriller 2021"],
+        "Sci-Fi":    ["science fiction 2023", "space movie 2022", "sci-fi thriller"],
+        "Drama":     ["drama 2023", "emotional drama film", "indie drama 2022"],
+        "Thriller":  ["thriller 2023", "psychological thriller", "crime thriller 2022"],
+        "Animation": ["animated movie 2023", "animation family 2022", "animated film 2021"],
+        "Crime":     ["crime movie 2023", "heist film 2022", "crime thriller 2021"],
+        "Fantasy":   ["fantasy movie 2023", "fantasy adventure film", "fantasy epic 2022"],
+    };
+
+    const selectedGenres = new Set();
+
+    window.onload = () => {
+        if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY);
+        buildChips();
+    };
+
+    function buildChips() {
+        const container = document.getElementById('genre-chips');
+        Object.keys(GENRE_QUERIES).forEach(genre => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.textContent = genre;
+            chip.onclick = () => toggleChip(chip, genre);
+            container.appendChild(chip);
+        });
+    }
+
+    function toggleChip(el, genre) {
+        if (selectedGenres.has(genre)) {
+            selectedGenres.delete(genre);
+            el.classList.remove('active');
+        } else {
+            selectedGenres.add(genre);
+            el.classList.add('active');
+        }
+        document.getElementById('discover-btn').disabled = selectedGenres.size === 0;
+    }
+
+    async function discoverMovies() {
+        const btn = document.getElementById('discover-btn');
+        const loadTxt = document.getElementById('loading-txt');
+        btn.disabled = true;
+        loadTxt.textContent = 'Fetching movies...';
+
+        const TARGET = 30;
+        // Fetch per genre, keeping results grouped
+        const genreResults = {}; // genre → [titles]
+        const seen = new Set();
+
+        const genres = [...selectedGenres];
+
+        await Promise.all(genres.map(async genre => {
+            const queries = GENRE_QUERIES[genre];
+            const titles = [];
+            for (const q of queries) {
+                if (titles.length >= Math.ceil(TARGET / genres.length) + 5) break;
+                try {
+                    const res = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(q)}&type=movie&apikey=${OMDB_KEY}`);
+                    const data = await res.json();
+                    if (data.Search) {
+                        data.Search.forEach(m => {
+                            if (!seen.has(m.Title)) {
+                                seen.add(m.Title);
+                                titles.push(m.Title);
+                            }
+                        });
+                    }
+                } catch {}
+            }
+            // Shuffle within genre
+            for (let i = titles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [titles[i], titles[j]] = [titles[j], titles[i]];
+            }
+            genreResults[genre] = titles;
+        }));
+
+        // Interleave genres to keep them grouped but balanced, up to 30 total
+        const perGenre = Math.ceil(TARGET / genres.length);
+        const final = [];
+        genres.forEach(genre => {
+            const slice = (genreResults[genre] || []).slice(0, perGenre);
+            final.push(...slice);
+        });
+        const trimmed = final.slice(0, TARGET);
+
+        document.getElementById('mtxt').value = trimmed.join('\n');
+        loadTxt.textContent = `✓ ${trimmed.length} movies loaded — shuffle or start swiping!`;
+        btn.disabled = false;
+    }
+
     function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
 
     function handleCSV(input) {
@@ -172,10 +279,10 @@
     async function joinRoom() {
         const rid = document.getElementById('joinID').value.toUpperCase();
         const { data } = await sb.from('rooms').select('*').eq('id', rid).single();
-        if (data) { 
-            state = { ...state, rid, user: 2, movies: data.movies }; 
+        if (data) {
+            state = { ...state, rid, user: 2, movies: data.movies };
             await sb.from('rooms').update({ swipes_2: {} }).eq('id', rid);
-            startSession(); 
+            startSession();
         }
     }
 
@@ -190,12 +297,9 @@
     }
 
     function updatePresence(db) {
-        if (db.swipes_2 !== null) {
-            document.getElementById('dot').style.display = 'block';
-        }
+        if (db.swipes_2 !== null) document.getElementById('dot').style.display = 'block';
     }
 
-    // Updated: stores full OMDB data and populates card back
     async function getPoster(title, index) {
         if (state.cache[index]) return state.cache[index];
         try {
@@ -211,30 +315,21 @@
     async function renderCard() {
         if (state.idx >= state.movies.length || state.isMatched) return;
         const title = state.movies[state.idx];
-
-        // Reset flip to front face
         document.getElementById('card-inner').classList.remove('flipped');
         document.getElementById('ctit').innerText = title;
 
-        const result = await getPoster(title, state.idx);
-        const { url, data } = result;
-
-        // Front face
+        const { url, data } = await getPoster(title, state.idx);
         document.getElementById('pbox').innerHTML = url === "🎬" ? "🎬" : `<img src="${url}">`;
 
-        // Back face
         const d = data || {};
         document.getElementById('back-title').innerText = d.Title || title;
-
         const tags = [d.Year, d.Runtime, ...(d.Genre ? d.Genre.split(', ') : [])].filter(Boolean);
         document.getElementById('back-meta').innerHTML = tags.map(t => `<span class="back-tag">${t}</span>`).join('');
-
         document.getElementById('back-plot').innerText = d.Plot && d.Plot !== "N/A" ? d.Plot : "";
         document.getElementById('back-director').innerHTML = d.Director && d.Director !== "N/A" ? `Director <span>${d.Director}</span>` : "";
         document.getElementById('back-rated').innerHTML = d.Rated && d.Rated !== "N/A" ? `Rated <span>${d.Rated}</span>` : "";
         document.getElementById('back-imdb').innerHTML = d.imdbRating && d.imdbRating !== "N/A" ? `IMDb <span>★ ${d.imdbRating}</span>` : "";
 
-        // Prefetch next 3
         for (let i = 1; i <= 3; i++) {
             const n = state.idx + i;
             if (n < state.movies.length) getPoster(state.movies[n], n);
@@ -245,20 +340,19 @@
         if (state.isMatched) return;
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
-        
+
         const card = document.getElementById('main-card');
         card.style.transform = v === 'yes' ? 'translateX(100px) rotate(10deg)' : 'translateX(-100px) rotate(-10deg)';
         card.style.opacity = '0';
 
         await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
-        
         const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
         checkAndLockMatch(data);
 
         setTimeout(() => {
             card.style.transform = 'none';
             card.style.opacity = '1';
-            state.idx++; 
+            state.idx++;
             renderCard();
         }, 200);
     }
@@ -268,7 +362,7 @@
         const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
         state.movies.forEach((movie, i) => {
             if (s1[i] === 'yes' && s2[i] === 'yes') {
-                state.isMatched = true; 
+                state.isMatched = true;
                 showMatchScreen(movie, i);
             }
         });
