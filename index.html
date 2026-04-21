@@ -32,7 +32,6 @@
             justify-content: flex-start;
             height: auto;
             min-height: 100%;
-            /* Extra bottom margin for mobile browser bars */
             padding-bottom: 120px; 
         }
 
@@ -46,7 +45,6 @@
         .btn-gh { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px; flex-shrink: 0; }
         .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
         
-        /* Premium Manual Entry UI */
         .manual-link { font-size: 11px; color: rgba(255,255,255,0.4); text-decoration: none; letter-spacing: 1px; margin: 15px 0; transition: color 0.3s; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; }
         .manual-link:hover { color: var(--accent); }
         
@@ -55,6 +53,15 @@
         .ta:focus { border-color: rgba(255,133,162,0.4); }
 
         .csv-box { border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 50px; width: 100%; max-width: 260px; text-align: center; color: rgba(255,255,255,0.6); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; margin-bottom: 10px; }
+
+        /* Director filter */
+        .director-wrap { width: 100%; max-width: 260px; margin-bottom: 14px; position: relative; }
+        .director-inp { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #fff; padding: 12px 36px 12px 14px; border-radius: 50px; width: 100%; outline: none; font-size: 13px; font-family: inherit; transition: border-color 0.2s; }
+        .director-inp::placeholder { color: rgba(255,255,255,0.25); }
+        .director-inp:focus { border-color: rgba(255,133,162,0.4); }
+        .director-inp.has-value { border-color: rgba(255,133,162,0.3); }
+        .director-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 14px; padding: 4px; display: none; line-height: 1; }
+        .director-clear.visible { display: block; }
 
         /* Card flip */
         .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; cursor: pointer; perspective: 1000px; }
@@ -74,10 +81,17 @@
         .back-imdb { font-size: 11px; color: rgba(255,255,255,0.4); }
         .back-imdb span { color: #f5c518; font-weight: 700; }
 
+        /* End of deck state */
+        .end-card { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; }
+        .end-icon { font-size: 40px; margin-bottom: 4px; }
+        .end-title { font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; }
+        .end-sub { font-size: 12px; color: rgba(255,255,255,0.35); letter-spacing: .05em; text-align: center; line-height: 1.6; }
+
         .swbtns { display: flex; gap: 30px; margin-top: 30px; }
         .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .swyes { background: var(--accent); color: #000; }
         .swno { background: #444; color: #fff; }
+        .swb:disabled { opacity: 0.2; cursor: not-allowed; }
 
         .status-header { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .pulse-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 12px #00ff88; animation: heartbeat 2s infinite; display: none; }
@@ -98,8 +112,8 @@
         .genre-chips { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; max-width: 260px; margin-bottom: 14px; }
         .chip { background: #2e2e2e; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); font-size: 12px; padding: 7px 14px; border-radius: 50px; cursor: pointer; transition: all .2s; user-select: none; }
         .chip.active { background: rgba(255,133,162,0.15); border-color: var(--accent); color: var(--accent); }
-        .discover-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; font-size: 12px; font-weight: 500; letter-spacing: .05em; }
-        .discover-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .discover-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; font-size: 12px; font-weight: 500; letter-spacing: .05em; transition: opacity 0.2s; }
+        .discover-btn:disabled { opacity: 0.25; cursor: not-allowed; }
         .loading-txt { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: .1em; margin-top: 8px; min-height: 16px; }
 
         .year-filter { width: 100%; max-width: 260px; margin-bottom: 16px; }
@@ -118,7 +132,7 @@
 <div class="sm">
     <div id="intro-sc" class="sc on">
         <div class="wordmark">Film<em>Finder</em></div>
-        <div class="tagline">Kelly and John</div>
+        <div class="tagline">Kelly & John</div>
         <button class="btn-g" onclick="showScreen('setup-sc')">Create Room</button>
         <div style="margin: 20px 0; color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 3px;">OR</div>
         <input type="text" id="joinID" class="inp" placeholder="Room Code">
@@ -131,6 +145,12 @@
         <div class="discover-label">Discover by genre</div>
         <div class="genre-chips" id="genre-chips"></div>
 
+        <!-- Director filter -->
+        <div class="director-wrap">
+            <input type="text" id="director-inp" class="director-inp" placeholder="Filter by director..." oninput="onDirectorInput(this)" autocomplete="off">
+            <button class="director-clear" id="director-clear" onclick="clearDirector()">✕</button>
+        </div>
+
         <div class="year-filter">
             <div class="year-labels">
                 <span>Year range</span>
@@ -139,8 +159,8 @@
             <div class="range-wrap">
                 <div class="range-track"></div>
                 <div class="range-fill" id="range-fill"></div>
-                <input type="range" id="year-min" min="1970" value="2000" step="1" oninput="updateYearRange()">
-                <input type="range" id="year-max" min="1970" value="" step="1" oninput="updateYearRange()">
+                <input type="range" id="year-min" min="1920" value="1920" step="1" oninput="updateYearRange()">
+                <input type="range" id="year-max" min="1920" value="" step="1" oninput="updateYearRange()">
             </div>
         </div>
 
@@ -167,7 +187,7 @@
             <div id="dot" class="pulse-dot"></div>
             <div id="roomDisp" class="room-tag"></div>
         </div>
-        <div class="mc" id="main-card" onclick="document.getElementById('card-inner').classList.toggle('flipped')">
+        <div class="mc" id="main-card" onclick="handleCardClick()">
             <div class="card-inner" id="card-inner">
                 <div class="card-front">
                     <div class="poster-box" id="pbox">🎬</div>
@@ -184,8 +204,8 @@
             </div>
         </div>
         <div class="swbtns">
-            <button class="swb swno" onclick="event.stopPropagation(); vote('no')">✕</button>
-            <button class="swb swyes" onclick="event.stopPropagation(); vote('yes')">♥</button>
+            <button class="swb swno" id="btn-no" onclick="event.stopPropagation(); vote('no')">✕</button>
+            <button class="swb swyes" id="btn-yes" onclick="event.stopPropagation(); vote('yes')">♥</button>
         </div>
     </div>
 
@@ -218,9 +238,12 @@
         if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY);
         const minEl = document.getElementById('year-min');
         const maxEl = document.getElementById('year-max');
+        minEl.min = 1920;
         minEl.max = CURRENT_YEAR;
+        maxEl.min = 1920;
         maxEl.max = CURRENT_YEAR;
         maxEl.value = CURRENT_YEAR;
+        minEl.value = 1920;
         buildChips();
         updateYearRange();
     };
@@ -252,7 +275,34 @@
             selectedGenres.add(genre);
             el.classList.add('active');
         }
-        document.getElementById('discover-btn').disabled = selectedGenres.size === 0;
+        updateDiscoverBtn();
+    }
+
+    function onDirectorInput(el) {
+        const val = el.value.trim();
+        el.classList.toggle('has-value', val.length > 0);
+        document.getElementById('director-clear').classList.toggle('visible', val.length > 0);
+        updateDiscoverBtn();
+    }
+
+    function clearDirector() {
+        const inp = document.getElementById('director-inp');
+        inp.value = '';
+        inp.classList.remove('has-value');
+        document.getElementById('director-clear').classList.remove('visible');
+        updateDiscoverBtn();
+    }
+
+    function updateDiscoverBtn() {
+        const hasGenre = selectedGenres.size > 0;
+        const hasDirector = document.getElementById('director-inp').value.trim().length > 0;
+        const btn = document.getElementById('discover-btn');
+        btn.disabled = !hasGenre && !hasDirector;
+        if (hasDirector && !hasGenre) {
+            btn.textContent = '✦ Show all Movies';
+        } else {
+            btn.textContent = '✦ Generate 30 Movies';
+        }
     }
 
     function updateYearRange() {
@@ -268,9 +318,9 @@
             }
         }
         document.getElementById('year-display').textContent = `${minVal} – ${maxVal}`;
-        const total = CURRENT_YEAR - 1970;
-        const leftPct = ((minVal - 1970) / total) * 100;
-        const rightPct = ((maxVal - 1970) / total) * 100;
+        const total = CURRENT_YEAR - 1920;
+        const leftPct = ((minVal - 1920) / total) * 100;
+        const rightPct = ((maxVal - 1920) / total) * 100;
         document.getElementById('range-fill').style.left = leftPct + '%';
         document.getElementById('range-fill').style.width = (rightPct - leftPct) + '%';
     }
@@ -280,35 +330,84 @@
         const loadTxt = document.getElementById('loading-txt');
         btn.disabled = true;
         loadTxt.textContent = 'Curating...';
+
         const yearMin = document.getElementById('year-min').value;
         const yearMax = document.getElementById('year-max').value;
+        const directorName = document.getElementById('director-inp').value.trim();
         const TARGET = 30;
-        const genres = [...selectedGenres];
-        const perGenre = Math.ceil(TARGET / genres.length);
         const seen = new Set();
-        const genreResults = {};
-        await Promise.all(genres.map(async genre => {
-            const genreId = TMDB_GENRES[genre];
-            const titles = [];
-            let page = 1;
-            while (titles.length < perGenre + 5 && page <= 3) {
-                try {
-                    const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=200&primary_release_date.gte=${yearMin}-01-01&primary_release_date.lte=${yearMax}-12-31&page=${page}`);
-                    const data = await res.json();
-                    if (data.results) {
-                        data.results.forEach(m => { if (m.title && !seen.has(m.title)) { seen.add(m.title); titles.push(m.title); } });
+        let titles = [];
+
+        // Director search via TMDB person lookup
+        if (directorName) {
+            try {
+                const personRes = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${TMDB_KEY}&query=${encodeURIComponent(directorName)}`);
+                const personData = await personRes.json();
+                const director = (personData.results || []).find(p => p.known_for_department === 'Directing') || personData.results?.[0];
+                if (director) {
+                    const credRes = await fetch(`https://api.themoviedb.org/3/person/${director.id}/movie_credits?api_key=${TMDB_KEY}`);
+                    const credData = await credRes.json();
+                    // No vote_count floor — include all films the director actually directed
+                    const directed = (credData.crew || [])
+                        .filter(m => m.job === 'Director' && m.title && m.release_date)
+                        .filter(m => {
+                            const yr = parseInt((m.release_date || '').slice(0, 4));
+                            return yr >= parseInt(yearMin) && yr <= parseInt(yearMax);
+                        })
+                        // Dedupe by title (TMDB sometimes has duplicate entries)
+                        .filter((m, i, arr) => arr.findIndex(x => x.title === m.title) === i)
+                        .sort((a, b) => {
+                            const ayr = parseInt((a.release_date || '').slice(0, 4));
+                            const byr = parseInt((b.release_date || '').slice(0, 4));
+                            return ayr - byr;
+                        });
+
+                    if (selectedGenres.size > 0) {
+                        const genreIds = [...selectedGenres].map(g => TMDB_GENRES[g]);
+                        directed.filter(m => (m.genre_ids || []).some(id => genreIds.includes(id)))
+                            .forEach(m => { if (!seen.has(m.title)) { seen.add(m.title); titles.push(m.title); } });
+                    } else {
+                        // No cap for director-only — show their full filmography
+                        directed.forEach(m => { if (!seen.has(m.title)) { seen.add(m.title); titles.push(m.title); } });
                     }
-                } catch {}
-                page++;
-            }
-            genreResults[genre] = titles.sort(() => Math.random() - 0.5).slice(0, perGenre);
-        }));
-        const final = [];
-        genres.forEach(genre => final.push(...(genreResults[genre] || [])));
-        const trimmed = final.slice(0, TARGET);
+                }
+            } catch {}
+        }
+
+        // Genre-only discovery (no director filter)
+        if (selectedGenres.size > 0 && !directorName) {
+            const genres = [...selectedGenres];
+            const perGenre = Math.ceil(TARGET / genres.length);
+            const genreResults = {};
+            await Promise.all(genres.map(async genre => {
+                const genreId = TMDB_GENRES[genre];
+                const genreTitles = [];
+                let page = 1;
+                while (genreTitles.length < perGenre + 5 && page <= 3) {
+                    try {
+                        const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=200&primary_release_date.gte=${yearMin}-01-01&primary_release_date.lte=${yearMax}-12-31&page=${page}`);
+                        const data = await res.json();
+                        if (data.results) {
+                            data.results.forEach(m => { if (m.title && !seen.has(m.title)) { seen.add(m.title); genreTitles.push(m.title); } });
+                        }
+                    } catch {}
+                    page++;
+                }
+                genreResults[genre] = genreTitles.sort(() => Math.random() - 0.5).slice(0, perGenre);
+            }));
+            genres.forEach(genre => titles.push(...(genreResults[genre] || [])));
+        }
+
+        const trimmed = titles.slice(0, TARGET);
         document.getElementById('mtxt').value = trimmed.join('\n');
-        loadTxt.textContent = `✦ ${trimmed.length} Titles Curated`;
+
+        if (trimmed.length === 0) {
+            loadTxt.textContent = 'No results found — try adjusting filters';
+        } else {
+            loadTxt.textContent = `✦ ${trimmed.length} titles ready`;
+        }
         btn.disabled = false;
+        updateDiscoverBtn();
     }
 
     function showScreen(id) {
@@ -330,7 +429,6 @@
                 return (cells[nameIdx] || "").replace(/^"|"$/g, '').trim();
             }).filter(t => t.length > 0);
             document.getElementById('mtxt').value = titles.join('\n');
-            document.getElementById('ta-wrap').style.display = 'block'; 
         };
         reader.readAsText(input.files[0]);
     }
@@ -383,8 +481,33 @@
         } catch { return { url: "🎬", data: null }; }
     }
 
+    function showEndOfDeck() {
+        document.getElementById('card-inner').classList.remove('flipped');
+        document.getElementById('card-inner').innerHTML = `
+            <div class="card-front">
+                <div class="end-card">
+                    <div class="end-icon">✦</div>
+                    <div class="end-title">That's everything</div>
+                    <div class="end-sub">You've seen all ${state.movies.length} films.<br>Waiting for your partner to finish…</div>
+                </div>
+            </div>`;
+        document.getElementById('btn-yes').disabled = true;
+        document.getElementById('btn-no').disabled = true;
+        document.getElementById('main-card').style.cursor = 'default';
+    }
+
+    function handleCardClick() {
+        if (state.idx < state.movies.length) {
+            document.getElementById('card-inner').classList.toggle('flipped');
+        }
+    }
+
     async function renderCard() {
-        if (state.idx >= state.movies.length || state.isMatched) return;
+        if (state.isMatched) return;
+        if (state.idx >= state.movies.length) {
+            showEndOfDeck();
+            return;
+        }
         const title = state.movies[state.idx];
         document.getElementById('card-inner').classList.remove('flipped');
         document.getElementById('ctit').innerText = title;
@@ -401,7 +524,7 @@
     }
 
     async function vote(v) {
-        if (state.isMatched) return;
+        if (state.isMatched || state.idx >= state.movies.length) return;
         state.mySwipes[state.idx] = v;
         const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
         const card = document.getElementById('main-card');
