@@ -95,7 +95,7 @@
         <div class="or-divider"><span>or add your own</span></div>
 
         <!-- Manual entry (unchanged) -->
-        <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist (CSV)</div>
+        <div class="csv-box" onclick="document.getElementById('csv-file').click()">+ Import Watchlist from Letterboxd (CSV)</div>
         <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
         <textarea id="mtxt" class="ta" placeholder="Titles will appear here..."></textarea>
         <button class="btn-gh" style="margin-bottom:10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
@@ -141,24 +141,26 @@
     const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
     const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
     const OMDB_KEY = "2399d7cb";
+    const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzODVmNGZkNDdlYzc5MzE0YjJmZjdlZjBhNTk3MTBmOCIsIm5iZiI6MTc0Njc0NDQyNy41Njc2MTYsInN1YiI6IjY4MjZkNDg3ZDhkZGFiMWY1YmRmN2MzYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.m7hmBWdAFNGL5r6RIMT6xwnVUpU7TxSn9rUnS2aEPz8";
+
+    // TMDB genre ID map
+    const TMDB_GENRES = {
+        "Action":      28,
+        "Romance":     10749,
+        "Comedy":      35,
+        "Horror":      27,
+        "Sci-Fi":      878,
+        "Drama":       18,
+        "Thriller":    53,
+        "Animation":   16,
+        "Crime":       80,
+        "Fantasy":     14,
+        "Mystery":     9648,
+        "Adventure":   12,
+    };
 
     let sb;
     let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false, cache: {} };
-
-    // Genre → curated OMDB search terms (each returns up to 10 results via &type=movie&s=)
-    const GENRE_QUERIES = {
-        "Action":    ["action hero 2022", "action thriller 2023", "spy action film"],
-        "Romance":   ["romantic drama 2022", "love story 2023", "romance comedy film"],
-        "Comedy":    ["comedy 2023", "funny movie 2022", "comedy film 2021"],
-        "Horror":    ["horror 2023", "scary movie 2022", "horror thriller 2021"],
-        "Sci-Fi":    ["science fiction 2023", "space movie 2022", "sci-fi thriller"],
-        "Drama":     ["drama 2023", "emotional drama film", "indie drama 2022"],
-        "Thriller":  ["thriller 2023", "psychological thriller", "crime thriller 2022"],
-        "Animation": ["animated movie 2023", "animation family 2022", "animated film 2021"],
-        "Crime":     ["crime movie 2023", "heist film 2022", "crime thriller 2021"],
-        "Fantasy":   ["fantasy movie 2023", "fantasy adventure film", "fantasy epic 2022"],
-    };
-
     const selectedGenres = new Set();
 
     window.onload = () => {
@@ -168,7 +170,7 @@
 
     function buildChips() {
         const container = document.getElementById('genre-chips');
-        Object.keys(GENRE_QUERIES).forEach(genre => {
+        Object.keys(TMDB_GENRES).forEach(genre => {
             const chip = document.createElement('div');
             chip.className = 'chip';
             chip.textContent = genre;
@@ -195,45 +197,46 @@
         loadTxt.textContent = 'Fetching movies...';
 
         const TARGET = 30;
-        // Fetch per genre, keeping results grouped
-        const genreResults = {}; // genre → [titles]
-        const seen = new Set();
-
         const genres = [...selectedGenres];
+        const perGenre = Math.ceil(TARGET / genres.length);
+        const seen = new Set();
+        const genreResults = {};
 
         await Promise.all(genres.map(async genre => {
-            const queries = GENRE_QUERIES[genre];
+            const genreId = TMDB_GENRES[genre];
             const titles = [];
-            for (const q of queries) {
-                if (titles.length >= Math.ceil(TARGET / genres.length) + 5) break;
+            let page = 1;
+
+            while (titles.length < perGenre + 5 && page <= 3) {
                 try {
-                    const res = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(q)}&type=movie&apikey=${OMDB_KEY}`);
+                    const res = await fetch(
+                        `https://api.themoviedb.org/3/discover/movie?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=500&page=${page}`,
+                        { headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json' } }
+                    );
                     const data = await res.json();
-                    if (data.Search) {
-                        data.Search.forEach(m => {
-                            if (!seen.has(m.Title)) {
-                                seen.add(m.Title);
-                                titles.push(m.Title);
+                    if (data.results) {
+                        data.results.forEach(m => {
+                            if (m.title && !seen.has(m.title)) {
+                                seen.add(m.title);
+                                titles.push(m.title);
                             }
                         });
                     }
                 } catch {}
+                page++;
             }
+
             // Shuffle within genre
             for (let i = titles.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [titles[i], titles[j]] = [titles[j], titles[i]];
             }
-            genreResults[genre] = titles;
+            genreResults[genre] = titles.slice(0, perGenre);
         }));
 
-        // Interleave genres to keep them grouped but balanced, up to 30 total
-        const perGenre = Math.ceil(TARGET / genres.length);
+        // Keep genres grouped
         const final = [];
-        genres.forEach(genre => {
-            const slice = (genreResults[genre] || []).slice(0, perGenre);
-            final.push(...slice);
-        });
+        genres.forEach(genre => final.push(...(genreResults[genre] || [])));
         const trimmed = final.slice(0, TARGET);
 
         document.getElementById('mtxt').value = trimmed.join('\n');
@@ -241,7 +244,10 @@
         btn.disabled = false;
     }
 
-    function showScreen(id) { document.querySelectorAll('.sc').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+    function showScreen(id) {
+        document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
+        document.getElementById(id).classList.add('on');
+    }
 
     function handleCSV(input) {
         const reader = new FileReader();
