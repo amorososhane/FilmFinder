@@ -1,562 +1,829 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FilmFinder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --accent: #ff85a2; --bg: #1a1a1a; --card: #262626; --text: #ffffff; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body, html { 
-            margin: 0; padding: 0; background: var(--bg); color: var(--text); 
-            font-family: 'DM Sans', sans-serif; height: 100%; width: 100%; 
-            overflow: hidden; 
-        }
-        
-        .sm { 
-            height: 100vh; width: 100vw; position: relative; 
-            overflow-y: auto; -webkit-overflow-scrolling: touch; 
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FilmFinder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--accent:#ff85a2;--bg:#141414;--card:#1e1e1e;--text:#fff;--muted:rgba(255,255,255,0.35);--border:rgba(255,255,255,0.08)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100%;width:100%;overflow:hidden}
+.app{height:100vh;width:100%;position:relative;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;opacity:0;visibility:hidden;transition:opacity .25s;overflow-y:auto;min-height:100%}
+.sc.on{opacity:1;visibility:visible;pointer-events:auto;z-index:10}
+.sc-top{justify-content:flex-start;padding-top:72px;padding-bottom:100px}
 
-        .sc { 
-            position: absolute; inset: 0; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; padding: 24px; 
-            opacity: 0; visibility: hidden; transition: opacity .3s ease; 
-            overflow-y: auto; 
-        }
+.back{position:absolute;top:20px;left:20px;background:none;border:none;color:var(--muted);cursor:pointer;padding:8px;z-index:20;display:flex;align-items:center;gap:5px;font-size:12px;letter-spacing:.05em;transition:color .2s;font-family:'DM Sans',sans-serif}
+.back:hover{color:var(--accent)}
+.back svg{width:16px;height:16px;flex-shrink:0}
 
-        #setup-sc {
-            justify-content: flex-start;
-            height: auto;
-            min-height: 100%;
-            padding-bottom: 120px; 
-        }
+/* LANDING */
+.logo{font-family:'Playfair Display',serif;font-size:48px;color:var(--accent);text-align:center;line-height:1}
+.logo em{font-style:italic;color:#fff}
+.tagline{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:7px;margin-bottom:36px;text-align:center}
+.tab-row{display:flex;width:100%;max-width:340px;border-bottom:1px solid var(--border);margin-bottom:32px}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s;font-family:'DM Sans',sans-serif}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab svg{width:15px;height:15px;flex-shrink:0}
+.tab-panel{display:none;flex-direction:column;align-items:center;width:100%;max-width:340px}
+.tab-panel.active{display:flex}
+.land-inp{background:#252525;border:1px solid var(--border);color:#fff;padding:16px 18px;border-radius:50px;width:100%;outline:none;font-size:14px;font-family:inherit;transition:border-color .2s;text-align:center;letter-spacing:.05em}
+.land-inp:focus{border-color:rgba(255,133,162,.45)}
+.land-inp::placeholder{color:rgba(255,255,255,.25)}
+.btn-primary{background:var(--accent);color:#000;border:none;padding:17px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:50px;width:100%;margin-top:10px;font-family:'DM Sans',sans-serif}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.55);padding:16px;border-radius:50px;cursor:pointer;width:100%;font-size:11px;letter-spacing:.08em;margin-top:10px;font-family:'DM Sans',sans-serif;transition:border-color .2s,color .2s}
+.btn-ghost:hover{border-color:rgba(255,133,162,.3);color:var(--accent)}
+.or-line{display:flex;align-items:center;gap:12px;width:100%;margin:16px 0}
+.or-line::before,.or-line::after{content:'';flex:1;height:1px;background:var(--border)}
+.or-line span{font-size:9px;letter-spacing:.3em;color:rgba(255,255,255,.15);text-transform:uppercase}
 
-        .sc.on { opacity: 1; visibility: visible; pointer-events: auto; z-index: 10; }
-        
-        .wordmark { font-family: 'Playfair Display', serif; font-size: 52px; line-height: 1; color: var(--accent); text-align: center; margin-bottom: 8px; }
-        .wordmark em { font-style: italic; color: #fff; }
-        .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
-        
-        .btn-g { background: var(--accent); color: #000; border: none; padding: 18px 32px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 50px; width: 100%; max-width: 260px; box-shadow: 0 10px 20px rgba(255, 133, 162, 0.2); flex-shrink: 0; }
-        .btn-gh { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; margin-top: 12px; flex-shrink: 0; }
-        .inp { background: #333; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 14px; border-radius: 12px; width: 100%; max-width: 260px; outline: none; margin-bottom: 12px; font-size: 16px; }
-        
-        .manual-link { font-size: 11px; color: rgba(255,255,255,0.4); text-decoration: none; letter-spacing: 1px; margin: 15px 0; transition: color 0.3s; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; }
-        .manual-link:hover { color: var(--accent); }
-        
-        .ta-wrap { width: 100%; max-width: 260px; display: none; margin-bottom: 15px; }
-        .ta { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #fff; padding: 16px; border-radius: 16px; width: 100%; height: 140px; resize: none; font-size: 13px; line-height: 1.6; font-family: inherit; outline: none; }
-        .ta:focus { border-color: rgba(255,133,162,0.4); }
+/* SETUP */
+.setup-title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:22px;align-self:flex-start;max-width:300px;width:100%}
+.field-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;align-self:flex-start;max-width:300px;width:100%}
+.genre-chips{display:flex;flex-wrap:wrap;gap:7px;width:100%;max-width:300px;margin-bottom:14px}
+.chip{background:#202020;border:1px solid var(--border);color:rgba(255,255,255,.45);font-size:11px;padding:6px 13px;border-radius:50px;cursor:pointer;transition:all .2s;user-select:none}
+.chip.active{background:rgba(255,133,162,.12);border-color:var(--accent);color:var(--accent)}
+.director-wrap{width:100%;max-width:300px;position:relative;margin-bottom:12px}
+.director-inp{background:#1e1e1e;border:1px solid var(--border);color:#fff;padding:12px 34px 12px 14px;border-radius:50px;width:100%;outline:none;font-size:12px;font-family:inherit;transition:border-color .2s}
+.director-inp::placeholder{color:rgba(255,255,255,.22)}
+.director-inp:focus{border-color:rgba(255,133,162,.4)}
+.director-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;display:none}
+.director-clear.vis{display:block}
+.year-filter{width:100%;max-width:300px;margin-bottom:14px}
+.year-labels{display:flex;justify-content:space-between;margin-bottom:8px}
+.year-labels span{font-size:10px;color:var(--muted)}
+.year-labels strong{font-size:12px;color:var(--accent);font-weight:500}
+.range-wrap{position:relative;height:26px;display:flex;align-items:center}
+.range-track{position:absolute;left:0;right:0;height:2px;background:#2a2a2a;border-radius:1px}
+.range-fill{position:absolute;height:2px;background:var(--accent);border-radius:1px;pointer-events:none}
+.range-wrap input[type=range]{position:absolute;width:100%;pointer-events:none;appearance:none;-webkit-appearance:none;background:transparent;height:2px}
+.range-wrap input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #141414;cursor:pointer;pointer-events:all}
+.ta{background:rgba(255,255,255,.03);border:1px solid var(--border);color:#fff;padding:14px;border-radius:14px;width:100%;max-width:300px;height:130px;resize:none;font-size:12px;line-height:1.6;font-family:inherit;outline:none;margin-bottom:10px}
+.ta:focus{border-color:rgba(255,133,162,.35)}
+.csv-btn{border:1px solid var(--border);padding:11px;border-radius:50px;width:100%;max-width:300px;text-align:center;color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:8px;background:transparent}
+.manual-link{font-size:10px;color:var(--muted);letter-spacing:1px;cursor:pointer;margin:12px 0;transition:color .2s;background:none;border:none;font-family:'DM Sans',sans-serif}
+.manual-link:hover{color:var(--accent)}
+.load-txt{font-size:10px;color:var(--muted);letter-spacing:.08em;margin-top:6px;min-height:14px}
+.disc-btn{background:transparent;border:1px solid rgba(255,133,162,.3);color:var(--accent);padding:14px;border-radius:50px;cursor:pointer;width:100%;max-width:300px;font-size:11px;letter-spacing:.05em;transition:opacity .2s;margin-bottom:4px;font-family:'DM Sans',sans-serif}
+.disc-btn:disabled{opacity:.22;cursor:not-allowed}
+.start-btn{background:var(--accent);color:#000;border:none;padding:16px 28px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:50px;width:100%;max-width:300px;margin-top:16px;font-family:'DM Sans',sans-serif}
 
-        .csv-box { border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 50px; width: 100%; max-width: 260px; text-align: center; color: rgba(255,255,255,0.6); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; margin-bottom: 10px; }
+/* SWIPE */
+.room-tag{font-size:9px;letter-spacing:.25em;color:var(--accent);text-transform:uppercase}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:22px;width:290px;min-height:390px;display:flex;flex-direction:column;cursor:pointer;perspective:1000px;padding:24px 18px}
+.card-inner{position:relative;flex:1;min-height:350px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-front,.card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column}
+.card-back{transform:rotateY(180deg);justify-content:flex-start;gap:8px;text-align:left;padding-top:2px;overflow:hidden}
+.poster-box{width:100%;height:260px;background:#111;border-radius:10px;margin-bottom:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:32px}
+.poster-box img{width:100%;height:100%;object-fit:cover}
+.ct{font-family:'Playfair Display',serif;font-size:22px;color:#fff;line-height:1.2;flex-grow:1;display:flex;align-items:center;justify-content:center;text-align:center}
+.back-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--accent);line-height:1.2}
+.back-meta{display:flex;gap:5px;flex-wrap:wrap}
+.back-tag{background:rgba(255,133,162,.1);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:20px}
+.back-plot{font-size:11px;color:rgba(255,255,255,.65);line-height:1.65;flex-grow:1;overflow:hidden}
+.back-detail{font-size:10px;color:var(--muted)}
+.back-detail span{color:rgba(255,255,255,.8)}
+.back-imdb{font-size:10px;color:var(--muted)}
+.back-imdb span{color:#f5c518;font-weight:700}
+.end-card{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px}
+.swbtns{display:flex;gap:28px;margin-top:26px}
+.swb{width:62px;height:62px;border-radius:50%;border:none;font-size:21px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.swyes{background:var(--accent);color:#000}
+.swno{background:#333;color:#fff}
+.swb:disabled{opacity:.18;cursor:not-allowed}
+@keyframes pgn{0%{box-shadow:0 0 0 0 rgba(0,255,136,.8);transform:scale(1)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0);transform:scale(1.2)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0);transform:scale(1)}}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:#00ff88;animation:pgn 1.8s ease-in-out infinite;display:none;flex-shrink:0}
+.pulse-dot.show{display:inline-block}
+#match-popup{position:fixed;inset:0;background:rgba(14,14,14,.95);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(10px)}
+.match-title{font-family:'Playfair Display',serif;font-size:28px;color:var(--accent);margin-bottom:24px}
+.match-poster{width:200px;height:290px;border-radius:14px;overflow:hidden;border:2px solid var(--accent);margin:16px 0}
+.match-poster img{width:100%;height:100%;object-fit:cover}
+.found-txt{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 
-        /* Director filter */
-        .director-wrap { width: 100%; max-width: 260px; margin-bottom: 14px; position: relative; }
-        .director-inp { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #fff; padding: 12px 36px 12px 14px; border-radius: 50px; width: 100%; outline: none; font-size: 13px; font-family: inherit; transition: border-color 0.2s; }
-        .director-inp::placeholder { color: rgba(255,255,255,0.25); }
-        .director-inp:focus { border-color: rgba(255,133,162,0.4); }
-        .director-inp.has-value { border-color: rgba(255,133,162,0.3); }
-        .director-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 14px; padding: 4px; display: none; line-height: 1; }
-        .director-clear.visible { display: block; }
+/* ROULETTE SETUP */
+.r-dot{width:8px;height:8px;border-radius:50%;background:#2a2a2a;display:inline-block;flex-shrink:0;transition:background .3s}
+.r-dot.online{background:#00ff88;animation:pgn 1.8s ease-in-out infinite}
+.r-partner-status{font-size:11px;color:var(--muted);letter-spacing:.06em;text-align:center;margin-bottom:14px;display:flex;align-items:center;gap:7px;justify-content:center}
+.r-list{width:100%;max-width:300px;display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.r-list-item{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 13px}
+.r-list-item span{font-size:12px;color:rgba(255,255,255,.75);flex:1}
+.r-list-item button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding-left:10px}
+.r-list-item button:hover{color:var(--accent)}
+.r-empty{font-size:11px;color:rgba(255,255,255,.12);text-align:center;padding:18px 0}
+.r-ready-btn{background:var(--accent);color:#000;border:none;padding:15px 28px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:50px;width:100%;max-width:300px;margin-top:6px;font-family:'DM Sans',sans-serif}
+.r-ready-btn:disabled{opacity:.22;cursor:not-allowed}
+.r-waiting{font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.08em;margin-top:8px;text-align:center;min-height:14px}
+.room-badge{font-size:9px;letter-spacing:.25em;color:var(--accent);text-transform:uppercase;margin-top:32px;margin-bottom:3px}
+.room-code{font-family:'Playfair Display',serif;font-size:30px;color:#fff;letter-spacing:9px;margin-bottom:20px}
+.r-inp{background:#1e1e1e;border:1px solid var(--border);color:#fff;padding:12px 14px;border-radius:12px;width:100%;max-width:300px;font-size:13px;font-family:inherit;outline:none;margin-bottom:9px;transition:border-color .2s}
+.r-inp:focus{border-color:rgba(255,133,162,.4)}
+.r-inp::placeholder{color:rgba(255,255,255,.18)}
+.r-add-btn{background:rgba(255,133,162,.08);border:1px solid rgba(255,133,162,.2);color:var(--accent);padding:11px;border-radius:50px;cursor:pointer;width:100%;max-width:300px;font-size:11px;letter-spacing:.06em;margin-bottom:18px;font-family:'DM Sans',sans-serif}
 
-        /* Card flip */
-        .mc { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 24px; width: 300px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); min-height: 400px; display: flex; flex-direction: column; cursor: pointer; perspective: 1000px; }
-        .card-inner { position: relative; width: 100%; flex: 1; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); min-height: 360px; }
-        .card-inner.flipped { transform: rotateY(180deg); }
-        .card-front, .card-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; }
-        .card-back { transform: rotateY(180deg); justify-content: flex-start; gap: 10px; text-align: left; padding-top: 4px; overflow: hidden; }
-        .poster-box { width: 100%; height: 280px; background: #111; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .poster-box img { width: 100%; height: 100%; object-fit: cover; }
-        .ct { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; line-height: 1.2; word-wrap: break-word; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .back-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--accent); line-height: 1.2; margin-bottom: 2px; }
-        .back-meta { display: flex; gap: 6px; flex-wrap: wrap; }
-        .back-tag { background: rgba(255,133,162,0.12); color: var(--accent); font-size: 10px; padding: 3px 8px; border-radius: 20px; letter-spacing: .05em; }
-        .back-plot { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; flex-grow: 1; overflow: hidden; }
-        .back-detail { font-size: 11px; color: rgba(255,255,255,0.4); }
-        .back-detail span { color: rgba(255,255,255,0.8); }
-        .back-imdb { font-size: 11px; color: rgba(255,255,255,0.4); }
-        .back-imdb span { color: #f5c518; font-weight: 700; }
+/* WHEEL */
+.wheel-wrap{position:relative;width:270px;height:270px;margin-bottom:18px;flex-shrink:0}
+.wheel-pointer{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:20px solid var(--accent);z-index:10}
+#wheel-canvas{border-radius:50%;display:block}
+.spin-title{font-family:'Playfair Display',serif;font-size:18px;color:rgba(255,255,255,.9);margin-bottom:4px;text-align:center}
+.spin-sub{font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:22px;text-align:center}
+.spin-btn{background:var(--accent);color:#000;border:none;padding:16px 44px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:50px;font-family:'DM Sans',sans-serif}
+.spin-btn:disabled{opacity:.25;cursor:not-allowed}
 
-        /* End of deck state */
-        .end-card { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; }
-        .end-icon { font-size: 40px; margin-bottom: 4px; }
-        .end-title { font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; }
-        .end-sub { font-size: 12px; color: rgba(255,255,255,0.35); letter-spacing: .05em; text-align: center; line-height: 1.6; }
-
-        .swbtns { display: flex; gap: 30px; margin-top: 30px; }
-        .swb { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .swyes { background: var(--accent); color: #000; }
-        .swno { background: #444; color: #fff; }
-        .swb:disabled { opacity: 0.2; cursor: not-allowed; }
-
-        .status-header { position: absolute; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .pulse-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 12px #00ff88; animation: heartbeat 2s infinite; display: none; }
-        @keyframes heartbeat { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
-        .room-tag { font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; }
-
-        #match-popup { position: fixed; inset: 0; background: #1a1a1ae6; z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(12px); }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
-        .match-title { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--accent); margin-bottom: 30px; }
-        .match-poster-final { width: 220px; height: 320px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent); box-shadow: 0 0 40px rgba(255, 133, 162, 0.4); margin: 20px 0; }
-        .match-poster-final img { width: 100%; height: 100%; object-fit: cover; }
-        .found-txt { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
-
-        .or-divider { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 260px; margin: 20px 0; }
-        .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
-        .or-divider span { font-size: 9px; letter-spacing: .3em; color: rgba(255,255,255,0.15); text-transform: uppercase; }
-        .discover-label { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 12px; align-self: flex-start; max-width: 260px; width: 100%; }
-        .genre-chips { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; max-width: 260px; margin-bottom: 14px; }
-        .chip { background: #2e2e2e; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); font-size: 12px; padding: 7px 14px; border-radius: 50px; cursor: pointer; transition: all .2s; user-select: none; }
-        .chip.active { background: rgba(255,133,162,0.15); border-color: var(--accent); color: var(--accent); }
-        .discover-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; border-radius: 50px; cursor: pointer; width: 100%; max-width: 260px; font-size: 12px; font-weight: 500; letter-spacing: .05em; transition: opacity 0.2s; }
-        .discover-btn:disabled { opacity: 0.25; cursor: not-allowed; }
-        .loading-txt { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: .1em; margin-top: 8px; min-height: 16px; }
-
-        .year-filter { width: 100%; max-width: 260px; margin-bottom: 16px; }
-        .year-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .year-labels span { font-size: 11px; color: rgba(255,255,255,0.35); }
-        .year-labels strong { font-size: 13px; color: var(--accent); font-weight: 500; }
-        .range-wrap { position: relative; height: 28px; display: flex; align-items: center; }
-        .range-track { position: absolute; left: 0; right: 0; height: 3px; background: #3a3a3a; border-radius: 2px; }
-        .range-fill { position: absolute; height: 3px; background: var(--accent); border-radius: 2px; pointer-events: none; }
-        .range-wrap input[type=range] { position: absolute; width: 100%; pointer-events: none; appearance: none; -webkit-appearance: none; background: transparent; height: 3px; }
-        .range-wrap input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 3px solid #1a1a1a; cursor: pointer; pointer-events: all; box-shadow: 0 0 0 2px rgba(255,133,162,0.3); }
-        .range-wrap input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 3px solid #1a1a1a; cursor: pointer; pointer-events: all; }
-    </style>
+/* ROULETTE RESULT */
+#roulette-result{position:fixed;inset:0;background:rgba(14,14,14,.97);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:48px 24px 40px;overflow-y:auto}
+.rr-eyebrow{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.rr-title{font-family:'Playfair Display',serif;font-size:24px;color:var(--accent);margin-bottom:14px;line-height:1.2;max-width:270px}
+.rr-poster{width:160px;height:235px;border-radius:12px;overflow:hidden;border:2px solid rgba(255,133,162,.35);margin:0 auto 14px;flex-shrink:0}
+.rr-poster img{width:100%;height:100%;object-fit:cover}
+.rr-poster-empty{width:160px;height:235px;border-radius:12px;background:#1c1c1c;border:2px solid rgba(255,133,162,.15);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px}
+.rr-meta{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:9px}
+.rr-tag{background:rgba(255,133,162,.1);color:var(--accent);font-size:10px;padding:2px 9px;border-radius:20px}
+.rr-plot{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;max-width:270px;margin:0 auto 10px}
+.rr-details{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.rr-row{font-size:10px;color:var(--muted)}
+.rr-row span{color:rgba(255,255,255,.75)}
+.rr-imdb{font-size:11px;color:var(--muted);margin-bottom:18px}
+.rr-imdb span{color:#f5c518;font-weight:700}
+.rr-actions{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%}
+.rr-again{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:13px;border-radius:50px;cursor:pointer;width:100%;max-width:250px;font-size:11px;font-family:'DM Sans',sans-serif}
+.rr-new{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:12px;border-radius:50px;cursor:pointer;width:100%;max-width:250px;font-size:10px;font-family:'DM Sans',sans-serif}
+#sw-sc .status-header{position:absolute;top:36px;display:flex;flex-direction:column;align-items:center;gap:7px}
+</style>
 </head>
 <body>
-<div class="sm">
-    <div id="intro-sc" class="sc on">
-        <div class="wordmark">Film<em>Finder</em></div>
-        <div class="tagline">Kelly & John</div>
-        <button class="btn-g" onclick="showScreen('setup-sc')">Create Room</button>
-        <div style="margin: 20px 0; color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 3px;">OR</div>
-        <input type="text" id="joinID" class="inp" placeholder="Room Code">
-        <button class="btn-gh" onclick="joinRoom()">Join Partner</button>
+<div class="app">
+
+<!-- LANDING -->
+<div id="intro-sc" class="sc on">
+  <div class="logo">Film<em>Finder</em></div>
+  <div class="tagline">Kelly & John</div>
+  <div class="tab-row">
+    <div class="tab active" id="tab-swipe" onclick="switchTab('swipe')">
+      <svg viewBox="0 0 36 36" fill="none">
+        <rect x="4" y="6" width="20" height="26" rx="3" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="10" y="10" width="20" height="26" rx="3" fill="#1c1c1c" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+        <polyline points="28,18 34,18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <polyline points="31,15 34,18 31,21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Swipe
     </div>
-
-    <div id="setup-sc" class="sc">
-        <div class="wordmark" style="font-size: 24px; margin-bottom: 20px; margin-top: 40px;">Movies</div>
-
-        <div class="discover-label">Discover by genre</div>
-        <div class="genre-chips" id="genre-chips"></div>
-
-        <!-- Director filter -->
-        <div class="director-wrap">
-            <input type="text" id="director-inp" class="director-inp" placeholder="Filter by director..." oninput="onDirectorInput(this)" autocomplete="off">
-            <button class="director-clear" id="director-clear" onclick="clearDirector()">✕</button>
-        </div>
-
-        <div class="year-filter">
-            <div class="year-labels">
-                <span>Year range</span>
-                <strong id="year-display"></strong>
-            </div>
-            <div class="range-wrap">
-                <div class="range-track"></div>
-                <div class="range-fill" id="range-fill"></div>
-                <input type="range" id="year-min" min="1920" value="1920" step="1" oninput="updateYearRange()">
-                <input type="range" id="year-max" min="1920" value="" step="1" oninput="updateYearRange()">
-            </div>
-        </div>
-
-        <button class="discover-btn" id="discover-btn" onclick="discoverMovies()" disabled>✦ Generate 30 Movies</button>
-        <div class="loading-txt" id="loading-txt"></div>
-
-        <div class="or-divider"><span>custom curation</span></div>
-
-        <div class="csv-box" onclick="document.getElementById('csv-file').click()">Import Letterboxd CSV</div>
-        <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
-        
-        <div class="manual-link" id="manual-trigger" onclick="toggleTextArea()">+ Add Specific Titles</div>
-        
-        <div class="ta-wrap" id="ta-wrap">
-            <textarea id="mtxt" class="ta" placeholder="Enter movie titles (one per line)..."></textarea>
-            <button class="btn-gh" style="font-size: 10px; padding: 10px;" onclick="shuffleList()">🔀 Shuffle Order</button>
-        </div>
-        
-        <button class="btn-g" onclick="createRoom()">Start Swiping</button>
+    <div class="tab" id="tab-roulette" onclick="switchTab('roulette')">
+      <svg viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="14" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <circle cx="18" cy="18" r="7" stroke="currentColor" stroke-width="1.2" opacity=".4"/>
+        <circle cx="18" cy="18" r="2.5" fill="currentColor"/>
+        <line x1="18" y1="4" x2="18" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="18" y1="25" x2="18" y2="32" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".3"/>
+        <line x1="4" y1="18" x2="11" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".3"/>
+        <line x1="25" y1="18" x2="32" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".3"/>
+        <polygon points="18,4 15.5,9 20.5,9" fill="currentColor"/>
+      </svg>
+      Roulette
     </div>
-
-    <div id="sw-sc" class="sc">
-        <div class="status-header">
-            <div id="dot" class="pulse-dot"></div>
-            <div id="roomDisp" class="room-tag"></div>
-        </div>
-        <div class="mc" id="main-card" onclick="handleCardClick()">
-            <div class="card-inner" id="card-inner">
-                <div class="card-front">
-                    <div class="poster-box" id="pbox">🎬</div>
-                    <div id="ctit" class="ct">Loading...</div>
-                </div>
-                <div class="card-back" id="card-back">
-                    <div id="back-title" class="back-title"></div>
-                    <div id="back-meta" class="back-meta"></div>
-                    <p id="back-plot" class="back-plot"></p>
-                    <div id="back-director" class="back-detail"></div>
-                    <div id="back-rated" class="back-detail"></div>
-                    <div id="back-imdb" class="back-imdb"></div>
-                </div>
-            </div>
-        </div>
-        <div class="swbtns">
-            <button class="swb swno" id="btn-no" onclick="event.stopPropagation(); vote('no')">✕</button>
-            <button class="swb swyes" id="btn-yes" onclick="event.stopPropagation(); vote('yes')">♥</button>
-        </div>
-    </div>
-
-    <div id="match-popup">
-        <div class="found-txt">You matched on</div>
-        <div class="match-poster-final" id="m-post-fin"></div>
-        <div id="m-name-fin" class="match-title">Movie Title</div>
-        <button class="btn-g" onclick="location.reload()">New Session</button>
-    </div>
+  </div>
+  <div class="tab-panel active" id="panel-swipe">
+    <input type="text" id="joinID" class="land-inp" placeholder="Enter Room Code" style="text-transform:uppercase">
+    <button class="btn-primary" onclick="joinRoom()">Join Room</button>
+    <div class="or-line"><span>or</span></div>
+    <button class="btn-ghost" onclick="showScreen('setup-sc')">Create New Session</button>
+  </div>
+  <div class="tab-panel" id="panel-roulette">
+    <input type="text" id="rJoinID" class="land-inp" placeholder="Enter Room Code" style="text-transform:uppercase">
+    <button class="btn-primary" onclick="joinRouletteRoom()">Join Room</button>
+    <div class="or-line"><span>or</span></div>
+    <button class="btn-ghost" onclick="createRouletteRoom()">Create New Session</button>
+  </div>
 </div>
 
+<!-- SWIPE SETUP -->
+<div id="setup-sc" class="sc sc-top">
+  <button class="back" onclick="showScreen('intro-sc')">
+    <svg viewBox="0 0 16 16" fill="none"><polyline points="10,3 4,8 10,13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back
+  </button>
+  <div class="setup-title">Swipe & Match</div>
+  <div class="field-label">Discover by genre</div>
+  <div class="genre-chips" id="genre-chips"></div>
+  <div class="director-wrap">
+    <input type="text" id="director-inp" class="director-inp" placeholder="Filter by director…" oninput="onDirectorInput(this)" autocomplete="off">
+    <button class="director-clear" id="director-clear" onclick="clearDirector()">✕</button>
+  </div>
+  <div class="year-filter">
+    <div class="year-labels"><span>Year range</span><strong id="year-display"></strong></div>
+    <div class="range-wrap">
+      <div class="range-track"></div>
+      <div class="range-fill" id="range-fill"></div>
+      <input type="range" id="year-min" min="1920" value="1920" step="1" oninput="updateYearRange()">
+      <input type="range" id="year-max" min="1920" value="" step="1" oninput="updateYearRange()">
+    </div>
+  </div>
+  <button class="disc-btn" id="discover-btn" onclick="discoverMovies()" disabled>✦ Generate 30 Movies</button>
+  <div class="load-txt" id="loading-txt"></div>
+  <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:300px;margin:16px 0">
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <span style="font-size:9px;letter-spacing:.3em;color:rgba(255,255,255,.12);text-transform:uppercase">or add manually</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+  <div class="csv-btn" onclick="document.getElementById('csv-file').click()">Import Letterboxd CSV</div>
+  <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSV(this)">
+  <button class="manual-link" id="manual-trigger" onclick="toggleTextArea()">+ Add specific titles</button>
+  <div id="ta-wrap" style="display:none;width:100%;max-width:300px;margin-bottom:10px">
+    <textarea id="mtxt" class="ta" placeholder="One title per line…"></textarea>
+    <button class="disc-btn" style="font-size:10px;padding:9px;" onclick="shuffleList()">Shuffle order</button>
+  </div>
+  <button class="start-btn" onclick="createRoom()">Start Swiping</button>
+</div>
+
+<!-- SWIPE SCREEN -->
+<div id="sw-sc" class="sc">
+  <button class="back" onclick="showScreen('intro-sc')" style="top:16px;left:16px">
+    <svg viewBox="0 0 16 16" fill="none"><polyline points="10,3 4,8 10,13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="status-header">
+    <div style="display:flex;align-items:center;gap:7px">
+      <div class="pulse-dot" id="dot"></div>
+      <div id="roomDisp" class="room-tag"></div>
+    </div>
+  </div>
+  <div class="mc" id="main-card" onclick="handleCardClick()">
+    <div class="card-inner" id="card-inner">
+      <div class="card-front">
+        <div class="poster-box" id="pbox">🎬</div>
+        <div id="ctit" class="ct">Loading…</div>
+      </div>
+      <div class="card-back">
+        <div id="back-title" class="back-title"></div>
+        <div id="back-meta" class="back-meta"></div>
+        <p id="back-plot" class="back-plot"></p>
+        <div id="back-director" class="back-detail"></div>
+        <div id="back-rated" class="back-detail"></div>
+        <div id="back-imdb" class="back-imdb"></div>
+      </div>
+    </div>
+  </div>
+  <div class="swbtns">
+    <button class="swb swno" id="btn-no" onclick="event.stopPropagation();vote('no')">✕</button>
+    <button class="swb swyes" id="btn-yes" onclick="event.stopPropagation();vote('yes')">♥</button>
+  </div>
+</div>
+
+<!-- MATCH POPUP -->
+<div id="match-popup">
+  <div class="found-txt">You both matched on</div>
+  <div class="match-poster" id="m-post-fin"></div>
+  <div id="m-name-fin" class="match-title">Movie Title</div>
+  <button class="start-btn" style="max-width:260px" onclick="location.reload()">New Session</button>
+</div>
+
+<!-- ROULETTE SETUP -->
+<div id="roulette-setup-sc" class="sc sc-top">
+  <button class="back" onclick="showScreen('intro-sc')">
+    <svg viewBox="0 0 16 16" fill="none"><polyline points="10,3 4,8 10,13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back
+  </button>
+  <div class="room-badge">Room Code</div>
+  <div class="room-code" id="r-room-code">——</div>
+  <div class="field-label" style="max-width:300px">Add a movie</div>
+  <input type="text" id="r-movie-inp" class="r-inp" placeholder="Movie title…" onkeydown="if(event.key==='Enter')addRouletteMovie()">
+  <button class="r-add-btn" onclick="addRouletteMovie()">+ Add to pool</button>
+  <div class="field-label" style="max-width:300px">Movie pool</div>
+  <div class="r-list" id="r-list">
+    <div class="r-empty" id="r-empty">No movies yet</div>
+  </div>
+  <div class="r-partner-status">
+    <div class="r-dot" id="r-partner-dot"></div>
+    <span id="r-partner-txt">Waiting for partner…</span>
+  </div>
+  <button class="r-ready-btn" id="r-ready-btn" onclick="setRouletteReady()" disabled>I'm Ready to Spin</button>
+  <div class="r-waiting" id="r-waiting-txt"></div>
+</div>
+
+<!-- ROULETTE SPIN -->
+<div id="roulette-spin-sc" class="sc">
+  <button class="back" onclick="showScreen('roulette-setup-sc')">
+    <svg viewBox="0 0 16 16" fill="none"><polyline points="10,3 4,8 10,13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back
+  </button>
+  <div class="spin-title" id="spin-title">Ready to spin?</div>
+  <div class="spin-sub">Fate will choose your movie</div>
+  <div class="wheel-wrap">
+    <div class="wheel-pointer"></div>
+    <canvas id="wheel-canvas" width="270" height="270"></canvas>
+  </div>
+  <button class="spin-btn" id="spin-btn" onclick="spinWheel()">Spin</button>
+</div>
+
+<!-- ROULETTE RESULT -->
+<div id="roulette-result">
+  <div class="rr-eyebrow">Tonight you're watching</div>
+  <div class="rr-title" id="rr-title">—</div>
+  <div id="rr-poster-wrap"></div>
+  <div class="rr-meta" id="rr-meta"></div>
+  <p class="rr-plot" id="rr-plot"></p>
+  <div class="rr-details" id="rr-details"></div>
+  <div class="rr-imdb" id="rr-imdb"></div>
+  <div class="rr-actions">
+    <button class="rr-again" onclick="spinAgain()">Spin Again</button>
+    <button class="rr-new" onclick="location.reload()">New Session</button>
+  </div>
+</div>
+
+</div>
 <script>
-    const SB_URL = "https://sndrnxxmdjryqfnjzwsf.supabase.co";
-    const SB_KEY = "sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O";
-    const OMDB_KEY = "2399d7cb";
-    const TMDB_KEY = "385f4fd47ec79314b2ff7ef0a59710f8";
-    const CURRENT_YEAR = new Date().getFullYear();
+const SB_URL='https://sndrnxxmdjryqfnjzwsf.supabase.co';
+const SB_KEY='sb_publishable_9DLNcW9p2Nx3uniVWlnQ-w_9Zqz5a7O';
+const OMDB_KEY='2399d7cb';
+const TMDB_KEY='385f4fd47ec79314b2ff7ef0a59710f8';
+const CY=new Date().getFullYear();
+const TMDB_GENRES={"Action":28,"Romance":10749,"Comedy":35,"Horror":27,"Sci-Fi":878,"Drama":18,"Thriller":53,"Animation":16,"Crime":80,"Fantasy":14,"Mystery":9648,"Adventure":12};
+let sb;
+let state={rid:null,user:null,movies:[],idx:0,mySwipes:{},isMatched:false,cache:{}};
+let rState={rid:null,user:null,movies:[],spinResult:null,channel:null};
+let wheelAngle=0,isSpinning=false;
+const selectedGenres=new Set();
 
-    const TMDB_GENRES = {
-        "Action": 28, "Romance": 10749, "Comedy": 35, "Horror": 27,
-        "Sci-Fi": 878, "Drama": 18, "Thriller": 53, "Animation": 16,
-        "Crime": 80, "Fantasy": 14, "Mystery": 9648, "Adventure": 12,
-    };
+window.onload=()=>{
+  if(typeof supabase!=='undefined')sb=supabase.createClient(SB_URL,SB_KEY);
+  const mn=document.getElementById('year-min');
+  const mx=document.getElementById('year-max');
+  mn.min=1920;mn.max=CY;mx.min=1920;mx.max=CY;
+  mx.value=CY;mn.value=1920;
+  buildChips();updateYearRange();
+};
 
-    let sb;
-    let state = { rid: null, user: null, movies: [], idx: 0, mySwipes: {}, isMatched: false, cache: {} };
-    const selectedGenres = new Set();
+function showScreen(id){
+  document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelector('.app').scrollTop=0;
+}
 
-    window.onload = () => {
-        if (typeof supabase !== 'undefined') sb = supabase.createClient(SB_URL, SB_KEY);
-        const minEl = document.getElementById('year-min');
-        const maxEl = document.getElementById('year-max');
-        minEl.min = 1920;
-        minEl.max = CURRENT_YEAR;
-        maxEl.min = 1920;
-        maxEl.max = CURRENT_YEAR;
-        maxEl.value = CURRENT_YEAR;
-        minEl.value = 1920;
-        buildChips();
-        updateYearRange();
-    };
+function switchTab(tab){
+  ['swipe','roulette'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    document.getElementById('panel-'+t).classList.toggle('active',t===tab);
+  });
+}
 
-    function toggleTextArea() {
-        const wrap = document.getElementById('ta-wrap');
-        const trigger = document.getElementById('manual-trigger');
-        const isHidden = (wrap.style.display === 'none' || wrap.style.display === '');
-        wrap.style.display = isHidden ? 'block' : 'none';
-        trigger.innerText = isHidden ? '− Hide Manual List' : '+ Add Specific Titles';
-    }
+function toggleTextArea(){
+  const w=document.getElementById('ta-wrap');
+  const t=document.getElementById('manual-trigger');
+  const h=w.style.display===''||w.style.display==='none';
+  w.style.display=h?'block':'none';
+  t.innerText=h?'− Hide list':'+ Add specific titles';
+}
 
-    function buildChips() {
-        const container = document.getElementById('genre-chips');
-        Object.keys(TMDB_GENRES).forEach(genre => {
-            const chip = document.createElement('div');
-            chip.className = 'chip';
-            chip.textContent = genre;
-            chip.onclick = () => toggleChip(chip, genre);
-            container.appendChild(chip);
-        });
-    }
+function buildChips(){
+  const c=document.getElementById('genre-chips');
+  Object.keys(TMDB_GENRES).forEach(g=>{
+    const el=document.createElement('div');
+    el.className='chip';el.textContent=g;
+    el.onclick=()=>toggleChip(el,g);
+    c.appendChild(el);
+  });
+}
 
-    function toggleChip(el, genre) {
-        if (selectedGenres.has(genre)) {
-            selectedGenres.delete(genre);
-            el.classList.remove('active');
-        } else {
-            selectedGenres.add(genre);
-            el.classList.add('active');
+function toggleChip(el,genre){
+  selectedGenres.has(genre)?(selectedGenres.delete(genre),el.classList.remove('active')):(selectedGenres.add(genre),el.classList.add('active'));
+  updateDiscoverBtn();
+}
+
+function onDirectorInput(el){
+  document.getElementById('director-clear').classList.toggle('vis',el.value.trim().length>0);
+  updateDiscoverBtn();
+}
+
+function clearDirector(){
+  document.getElementById('director-inp').value='';
+  document.getElementById('director-clear').classList.remove('vis');
+  updateDiscoverBtn();
+}
+
+function updateDiscoverBtn(){
+  const hg=selectedGenres.size>0;
+  const hd=document.getElementById('director-inp').value.trim().length>0;
+  const b=document.getElementById('discover-btn');
+  b.disabled=!hg&&!hd;
+  b.textContent=(hd&&!hg)?'✦ Show all movies':'✦ Generate 30 movies';
+}
+
+function updateYearRange(){
+  const mn=document.getElementById('year-min');
+  const mx=document.getElementById('year-max');
+  let a=parseInt(mn.value),b=parseInt(mx.value);
+  if(a>=b){document.activeElement===mn?(mn.value=b-1,a=b-1):(mx.value=a+1,b=a+1);}
+  document.getElementById('year-display').textContent=`${a} – ${b}`;
+  const t=CY-1920;
+  document.getElementById('range-fill').style.left=((a-1920)/t*100)+'%';
+  document.getElementById('range-fill').style.width=((b-a)/t*100)+'%';
+}
+
+async function discoverMovies(){
+  const b=document.getElementById('discover-btn');
+  const lt=document.getElementById('loading-txt');
+  b.disabled=true;lt.textContent='Curating…';
+  const ymi=document.getElementById('year-min').value;
+  const ymx=document.getElementById('year-max').value;
+  const dir=document.getElementById('director-inp').value.trim();
+  const seen=new Set();let titles=[];
+  if(dir){
+    try{
+      const pr=await fetch(`https://api.themoviedb.org/3/search/person?api_key=${TMDB_KEY}&query=${encodeURIComponent(dir)}`);
+      const pd=await pr.json();
+      const d=(pd.results||[]).find(p=>p.known_for_department==='Directing')||pd.results?.[0];
+      if(d){
+        const cr=await fetch(`https://api.themoviedb.org/3/person/${d.id}/movie_credits?api_key=${TMDB_KEY}`);
+        const cd=await cr.json();
+        const directed=(cd.crew||[]).filter(m=>m.job==='Director'&&m.title&&m.release_date)
+          .filter(m=>{const y=parseInt((m.release_date||'').slice(0,4));return y>=parseInt(ymi)&&y<=parseInt(ymx);})
+          .filter((m,i,a)=>a.findIndex(x=>x.title===m.title)===i)
+          .sort((a,b)=>parseInt((a.release_date||'').slice(0,4))-parseInt((b.release_date||'').slice(0,4)));
+        if(selectedGenres.size>0){
+          const gids=[...selectedGenres].map(g=>TMDB_GENRES[g]);
+          directed.filter(m=>(m.genre_ids||[]).some(id=>gids.includes(id))).forEach(m=>{if(!seen.has(m.title)){seen.add(m.title);titles.push(m.title);}});
+        }else{
+          directed.forEach(m=>{if(!seen.has(m.title)){seen.add(m.title);titles.push(m.title);}});
         }
-        updateDiscoverBtn();
+      }
+    }catch(e){console.error(e);}
+  }
+  if(selectedGenres.size>0&&!dir){
+    const genres=[...selectedGenres];const perG=Math.ceil(30/genres.length);const gr={};
+    await Promise.all(genres.map(async genre=>{
+      const gid=TMDB_GENRES[genre];const gt=[];let page=1;
+      while(gt.length<perG+5&&page<=3){
+        try{
+          const r=await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${gid}&sort_by=popularity.desc&vote_count.gte=200&primary_release_date.gte=${ymi}-01-01&primary_release_date.lte=${ymx}-12-31&page=${page}`);
+          const d=await r.json();
+          if(d.results)d.results.forEach(m=>{if(m.title&&!seen.has(m.title)){seen.add(m.title);gt.push(m.title);}});
+        }catch{}page++;
+      }
+      gr[genre]=gt.sort(()=>Math.random()-.5).slice(0,perG);
+    }));
+    genres.forEach(g=>titles.push(...(gr[g]||[])));
+  }
+  const trimmed=titles.slice(0,30);
+  document.getElementById('mtxt').value=trimmed.join('\n');
+  if(document.getElementById('ta-wrap').style.display!=='block'){
+    document.getElementById('ta-wrap').style.display='block';
+    document.getElementById('manual-trigger').innerText='− Hide list';
+  }
+  lt.textContent=trimmed.length===0?'No results — adjust filters':`✦ ${trimmed.length} titles ready`;
+  b.disabled=false;updateDiscoverBtn();
+}
+
+function handleCSV(input){
+  const r=new FileReader();
+  r.onload=e=>{
+    const lines=e.target.result.split(/\r?\n/).map(l=>l.trim()).filter(l=>l!=='');
+    const hi=lines.findIndex(l=>l.toLowerCase().includes('name'));
+    if(hi===-1)return;
+    const headers=lines[hi].split(',');
+    const ni=headers.findIndex(h=>h.trim().toLowerCase()==='name');
+    const titles=lines.slice(hi+1).map(line=>{
+      const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+      return(cells[ni]||'').replace(/^"|"$/g,'').trim();
+    }).filter(t=>t.length>0);
+    document.getElementById('mtxt').value=titles.join('\n');
+  };
+  r.readAsText(input.files[0]);
+}
+
+function shuffleList(){
+  let t=document.getElementById('mtxt').value.split('\n').filter(t=>t.trim()!=='');
+  t.sort(()=>Math.random()-.5);
+  document.getElementById('mtxt').value=t.join('\n');
+}
+
+async function createRoom(){
+  const mvList=document.getElementById('mtxt').value.split('\n').map(t=>t.trim()).filter(t=>t!=='');
+  if(!mvList.length){alert('Add some movies first!');return;}
+  const rid=Math.random().toString(36).substring(2,6).toUpperCase();
+  const{error}=await sb.from('rooms').insert([{id:rid,movies:mvList,swipes_1:{},swipes_2:null}]);
+  if(!error){state={...state,rid,user:1,movies:mvList};startSession();}
+  else{console.error(error);alert('Error: '+error.message);}
+}
+
+async function joinRoom(){
+  const rid=document.getElementById('joinID').value.toUpperCase().trim();
+  if(!rid)return;
+  const{data,error}=await sb.from('rooms').select('*').eq('id',rid).single();
+  if(data){
+    state={...state,rid,user:2,movies:data.movies};
+    await sb.from('rooms').update({swipes_2:{}}).eq('id',rid);
+    startSession();
+  }else{alert('Room not found.');console.error(error);}
+}
+
+function startSession(){
+  showScreen('sw-sc');
+  document.getElementById('roomDisp').innerText=state.rid;
+  renderCard();
+  sb.channel('live-'+state.rid).on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`id=eq.${state.rid}`},p=>{
+    updatePresence(p.new);checkAndLockMatch(p.new);
+  }).subscribe();
+}
+
+function updatePresence(db){
+  if(db.swipes_2!==null)document.getElementById('dot').classList.add('show');
+}
+
+async function getPoster(title,key){
+  const k=key!==undefined?key:title;
+  if(state.cache[k])return state.cache[k];
+  try{
+    const res=await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+    const data=await res.json();
+    const url=(data.Poster&&data.Poster!=='N/A')?data.Poster:'🎬';
+    state.cache[k]={url,data};return state.cache[k];
+  }catch{return{url:'🎬',data:null};}
+}
+
+function showEndOfDeck(){
+  document.getElementById('card-inner').classList.remove('flipped');
+  document.getElementById('card-inner').innerHTML=`<div class="card-front"><div class="end-card"><div style="font-size:32px">✦</div><div style="font-family:'Playfair Display',serif;font-size:20px;margin-top:8px">That's everything</div><div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.6;margin-top:6px">You've seen all ${state.movies.length} films.<br>Waiting for your partner…</div></div></div>`;
+  document.getElementById('btn-yes').disabled=true;
+  document.getElementById('btn-no').disabled=true;
+  document.getElementById('main-card').style.cursor='default';
+}
+
+function handleCardClick(){
+  if(state.idx<state.movies.length)document.getElementById('card-inner').classList.toggle('flipped');
+}
+
+async function renderCard(){
+  if(state.isMatched)return;
+  if(state.idx>=state.movies.length){showEndOfDeck();return;}
+  const title=state.movies[state.idx];
+  document.getElementById('card-inner').classList.remove('flipped');
+  document.getElementById('ctit').innerText=title;
+  const{url,data}=await getPoster(title,state.idx);
+  document.getElementById('pbox').innerHTML=url==='🎬'?'🎬':`<img src="${url}">`;
+  const d=data||{};
+  document.getElementById('back-title').innerText=d.Title||title;
+  const tags=[d.Year,d.Runtime,...(d.Genre?d.Genre.split(', '):[])].filter(Boolean);
+  document.getElementById('back-meta').innerHTML=tags.map(t=>`<span class="back-tag">${t}</span>`).join('');
+  document.getElementById('back-plot').innerText=d.Plot&&d.Plot!=='N/A'?d.Plot:'';
+  document.getElementById('back-director').innerHTML=d.Director&&d.Director!=='N/A'?`Director <span>${d.Director}</span>`:'';
+  document.getElementById('back-rated').innerHTML=d.Rated&&d.Rated!=='N/A'?`Rated <span>${d.Rated}</span>`:'';
+  document.getElementById('back-imdb').innerHTML=d.imdbRating&&d.imdbRating!=='N/A'?`IMDb <span>★ ${d.imdbRating}</span>`:'';
+}
+
+async function vote(v){
+  if(state.isMatched||state.idx>=state.movies.length)return;
+  state.mySwipes[state.idx]=v;
+  const col=state.user===1?'swipes_1':'swipes_2';
+  const card=document.getElementById('main-card');
+  card.style.transform=v==='yes'?'translateX(90px) rotate(8deg)':'translateX(-90px) rotate(-8deg)';
+  card.style.opacity='0';
+  await sb.from('rooms').update({[col]:state.mySwipes}).eq('id',state.rid);
+  const{data}=await sb.from('rooms').select('*').eq('id',state.rid).single();
+  checkAndLockMatch(data);
+  setTimeout(()=>{card.style.transform='none';card.style.opacity='1';state.idx++;renderCard();},200);
+}
+
+function checkAndLockMatch(db){
+  if(state.isMatched)return;
+  const s1=db.swipes_1||{},s2=db.swipes_2||{};
+  state.movies.forEach((movie,i)=>{
+    if(s1[i]==='yes'&&s2[i]==='yes'){state.isMatched=true;showMatchScreen(movie,i);}
+  });
+}
+
+async function showMatchScreen(title,index){
+  document.getElementById('m-name-fin').innerText=title;
+  const result=await getPoster(title,index);
+  document.getElementById('m-post-fin').innerHTML=result.url==='🎬'?'🎬':`<img src="${result.url}" style="width:100%;height:100%;object-fit:cover">`;
+  document.getElementById('match-popup').style.display='flex';
+}
+
+/* ══ ROULETTE ══ */
+async function createRouletteRoom(){
+  try{
+    const rid='R'+Math.random().toString(36).substring(2,5).toUpperCase();
+    const{error}=await sb.from('rooms').insert([{
+      id:rid,movies:[],
+      swipes_1:{roulette:true,movies:[],ready:false},
+      swipes_2:null
+    }]);
+    if(error){console.error(error);alert('Could not create room: '+error.message);return;}
+    rState.rid=rid;rState.user=1;rState.movies=[];
+    document.getElementById('r-room-code').innerText=rid;
+    document.getElementById('r-partner-dot').classList.remove('online');
+    document.getElementById('r-partner-txt').innerText='Waiting for partner…';
+    document.getElementById('r-waiting-txt').innerText='';
+    const btn=document.getElementById('r-ready-btn');
+    btn.disabled=true;btn.textContent="I'm Ready to Spin";
+    renderRouletteList();
+    showScreen('roulette-setup-sc');
+    subscribeRouletteRoom();
+  }catch(e){console.error(e);alert('Error: '+e.message);}
+}
+
+async function joinRouletteRoom(){
+  const rid=document.getElementById('rJoinID').value.toUpperCase().trim();
+  if(!rid)return;
+  const{data,error}=await sb.from('rooms').select('*').eq('id',rid).single();
+  if(!data){alert('Room not found.');console.error(error);return;}
+  rState.rid=rid;rState.user=2;
+  const p1Movies=(data.swipes_1||{}).movies||[];
+  rState.movies=[...p1Movies];
+  await sb.from('rooms').update({swipes_2:{roulette:true,movies:[],ready:false}}).eq('id',rid);
+  document.getElementById('r-room-code').innerText=rid;
+  document.getElementById('r-partner-dot').classList.add('online');
+  document.getElementById('r-partner-txt').innerText='Partner is online';
+  document.getElementById('r-waiting-txt').innerText='';
+  const btn=document.getElementById('r-ready-btn');
+  btn.disabled=true;btn.textContent="I'm Ready to Spin";
+  renderRouletteList();
+  showScreen('roulette-setup-sc');
+  subscribeRouletteRoom();
+}
+
+function subscribeRouletteRoom(){
+  if(rState.channel)rState.channel.unsubscribe();
+  rState.channel=sb.channel('roulette-'+rState.rid)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`id=eq.${rState.rid}`},p=>{
+      handleRouletteUpdate(p.new);
+    }).subscribe();
+}
+
+function handleRouletteUpdate(db){
+  const me=rState.user===1?db.swipes_1:db.swipes_2;
+  const partner=rState.user===1?db.swipes_2:db.swipes_1;
+  if(partner){
+    document.getElementById('r-partner-dot').classList.add('online');
+    document.getElementById('r-partner-txt').innerText=partner.ready?'Partner is ready!':'Partner is online';
+  }
+  const myMovies=(me||{}).movies||[];
+  const partnerMovies=(partner||{}).movies||[];
+  rState.movies=[...new Set([...myMovies,...partnerMovies])];
+  renderRouletteList();
+  if((me||{}).ready&&(partner||{}).ready)launchRouletteSpin();
+}
+
+async function addRouletteMovie(){
+  const inp=document.getElementById('r-movie-inp');
+  const title=inp.value.trim();
+  if(!title)return;
+  inp.value='';
+  const col=rState.user===1?'swipes_1':'swipes_2';
+  const{data}=await sb.from('rooms').select('*').eq('id',rState.rid).single();
+  const colData=data[col]||{roulette:true,movies:[],ready:false};
+  if(!colData.movies.includes(title))colData.movies.push(title);
+  await sb.from('rooms').update({[col]:colData}).eq('id',rState.rid);
+  if(!rState.movies.includes(title))rState.movies.push(title);
+  renderRouletteList();
+}
+
+async function removeRouletteMovie(title){
+  const col=rState.user===1?'swipes_1':'swipes_2';
+  const{data}=await sb.from('rooms').select('*').eq('id',rState.rid).single();
+  const colData=data[col]||{roulette:true,movies:[],ready:false};
+  colData.movies=colData.movies.filter(m=>m!==title);
+  await sb.from('rooms').update({[col]:colData}).eq('id',rState.rid);
+  rState.movies=rState.movies.filter(m=>m!==title);
+  renderRouletteList();
+}
+
+function renderRouletteList(){
+  const list=document.getElementById('r-list');
+  const empty=document.getElementById('r-empty');
+  list.innerHTML='';
+  if(rState.movies.length===0){
+    empty.style.display='block';list.appendChild(empty);
+  }else{
+    empty.style.display='none';
+    rState.movies.forEach(title=>{
+      const item=document.createElement('div');
+      item.className='r-list-item';
+      item.innerHTML=`<span>${title}</span><button onclick="removeRouletteMovie(${JSON.stringify(title)})">✕</button>`;
+      list.appendChild(item);
+    });
+  }
+  document.getElementById('r-ready-btn').disabled=rState.movies.length<2;
+}
+
+async function setRouletteReady(){
+  const col=rState.user===1?'swipes_1':'swipes_2';
+  const{data}=await sb.from('rooms').select('*').eq('id',rState.rid).single();
+  const colData=data[col]||{roulette:true,movies:[],ready:false};
+  colData.ready=true;
+  await sb.from('rooms').update({[col]:colData}).eq('id',rState.rid);
+  const partner=rState.user===1?data.swipes_2:data.swipes_1;
+  if(partner&&partner.ready){
+    launchRouletteSpin();
+  }else{
+    const btn=document.getElementById('r-ready-btn');
+    btn.disabled=true;btn.textContent='✓ Ready';
+    document.getElementById('r-waiting-txt').textContent='Waiting for partner…';
+  }
+}
+
+function launchRouletteSpin(){
+  if(document.getElementById('roulette-spin-sc').classList.contains('on'))return;
+  wheelAngle=0;
+  drawWheel(rState.movies,0);
+  document.getElementById('spin-title').innerText='Ready to spin?';
+  document.getElementById('spin-btn').disabled=false;
+  showScreen('roulette-spin-sc');
+}
+
+const WHEEL_COLORS=['#ff85a2','#c9748e','#ff9eb5','#a85c6d','#ffb3c6','#d46b83','#ff6e92','#b34d66'];
+
+function drawWheel(movies,angle){
+  const canvas=document.getElementById('wheel-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cx=135,cy=135,r=125;
+  ctx.clearRect(0,0,270,270);
+  if(!movies||movies.length===0)return;
+  const slice=(2*Math.PI)/movies.length;
+  movies.forEach((title,i)=>{
+    const start=angle+i*slice-Math.PI/2;
+    const end=start+slice;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,end);ctx.closePath();
+    ctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length];ctx.fill();
+    ctx.strokeStyle='#141414';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(start+slice/2);
+    ctx.textAlign='right';
+    ctx.fillStyle=i%2===0?'#000':'#fff';
+    ctx.font=`500 ${Math.min(11,Math.max(8,100/movies.length))}px DM Sans,sans-serif`;
+    ctx.fillText(title.length>14?title.slice(0,13)+'…':title,r-8,4);
+    ctx.restore();
+  });
+  ctx.beginPath();ctx.arc(cx,cy,14,0,2*Math.PI);
+  ctx.fillStyle='#141414';ctx.fill();
+  ctx.strokeStyle='rgba(255,133,162,0.35)';ctx.lineWidth=1.5;ctx.stroke();
+}
+
+function spinWheel(){
+  if(isSpinning||rState.movies.length<2)return;
+  isSpinning=true;
+  document.getElementById('spin-btn').disabled=true;
+  document.getElementById('spin-title').innerText='Spinning…';
+  const movies=rState.movies;
+  const slice=(2*Math.PI)/movies.length;
+  const extra=6+Math.floor(Math.random()*4);
+  const targetIdx=Math.floor(Math.random()*movies.length);
+  const targetAngle=-(targetIdx*slice+slice/2);
+  const totalRotation=extra*2*Math.PI+targetAngle-(wheelAngle%(2*Math.PI));
+  const duration=4000+Math.random()*1000;
+  const startAngle=wheelAngle,endAngle=startAngle+totalRotation;
+  const startTime=performance.now();
+  const easeOut=t=>1-Math.pow(1-t,4);
+  function frame(now){
+    const t=Math.min((now-startTime)/duration,1);
+    wheelAngle=startAngle+totalRotation*easeOut(t);
+    drawWheel(movies,wheelAngle);
+    if(t<1){requestAnimationFrame(frame);}
+    else{
+      wheelAngle=endAngle;isSpinning=false;
+      rState.spinResult=movies[targetIdx];
+      setTimeout(()=>showRouletteResult(movies[targetIdx]),500);
     }
+  }
+  requestAnimationFrame(frame);
+}
 
-    function onDirectorInput(el) {
-        const val = el.value.trim();
-        el.classList.toggle('has-value', val.length > 0);
-        document.getElementById('director-clear').classList.toggle('visible', val.length > 0);
-        updateDiscoverBtn();
-    }
+async function showRouletteResult(title){
+  document.getElementById('rr-title').innerText=title;
+  document.getElementById('roulette-result').style.display='flex';
+  document.getElementById('rr-meta').innerHTML='';
+  document.getElementById('rr-plot').innerText='';
+  document.getElementById('rr-details').innerHTML='';
+  document.getElementById('rr-imdb').innerHTML='';
+  document.getElementById('rr-poster-wrap').innerHTML='<div class="rr-poster-empty">🎬</div>';
+  try{
+    const res=await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+    const d=await res.json();
+    if(d.Poster&&d.Poster!=='N/A')
+      document.getElementById('rr-poster-wrap').innerHTML=`<div class="rr-poster"><img src="${d.Poster}"></div>`;
+    const tags=[d.Year,d.Runtime,d.Rated,...(d.Genre?d.Genre.split(', '):[])].filter(t=>t&&t!=='N/A');
+    document.getElementById('rr-meta').innerHTML=tags.map(t=>`<span class="rr-tag">${t}</span>`).join('');
+    if(d.Plot&&d.Plot!=='N/A')document.getElementById('rr-plot').innerText=d.Plot;
+    const rows=[];
+    if(d.Director&&d.Director!=='N/A')rows.push(`Director <span>${d.Director}</span>`);
+    if(d.Writer&&d.Writer!=='N/A')rows.push(`Writer <span>${d.Writer.split(',')[0].trim()}</span>`);
+    if(d.Actors&&d.Actors!=='N/A')rows.push(`Cast <span>${d.Actors}</span>`);
+    if(d.Country&&d.Country!=='N/A')rows.push(`Country <span>${d.Country}</span>`);
+    if(d.Language&&d.Language!=='N/A')rows.push(`Language <span>${d.Language}</span>`);
+    if(d.Awards&&d.Awards!=='N/A')rows.push(`Awards <span>${d.Awards}</span>`);
+    document.getElementById('rr-details').innerHTML=rows.map(r=>`<div class="rr-row">${r}</div>`).join('');
+    if(d.imdbRating&&d.imdbRating!=='N/A')
+      document.getElementById('rr-imdb').innerHTML=`IMDb <span>★ ${d.imdbRating}</span>`;
+  }catch(e){console.error(e);}
+}
 
-    function clearDirector() {
-        const inp = document.getElementById('director-inp');
-        inp.value = '';
-        inp.classList.remove('has-value');
-        document.getElementById('director-clear').classList.remove('visible');
-        updateDiscoverBtn();
-    }
-
-    function updateDiscoverBtn() {
-        const hasGenre = selectedGenres.size > 0;
-        const hasDirector = document.getElementById('director-inp').value.trim().length > 0;
-        const btn = document.getElementById('discover-btn');
-        btn.disabled = !hasGenre && !hasDirector;
-        if (hasDirector && !hasGenre) {
-            btn.textContent = '✦ Show all Movies';
-        } else {
-            btn.textContent = '✦ Generate 30 Movies';
-        }
-    }
-
-    function updateYearRange() {
-        const minEl = document.getElementById('year-min');
-        const maxEl = document.getElementById('year-max');
-        let minVal = parseInt(minEl.value);
-        let maxVal = parseInt(maxEl.value);
-        if (minVal >= maxVal) {
-            if (document.activeElement === minEl) {
-                minEl.value = maxVal - 1; minVal = maxVal - 1;
-            } else {
-                maxEl.value = minVal + 1; maxVal = minVal + 1;
-            }
-        }
-        document.getElementById('year-display').textContent = `${minVal} – ${maxVal}`;
-        const total = CURRENT_YEAR - 1920;
-        const leftPct = ((minVal - 1920) / total) * 100;
-        const rightPct = ((maxVal - 1920) / total) * 100;
-        document.getElementById('range-fill').style.left = leftPct + '%';
-        document.getElementById('range-fill').style.width = (rightPct - leftPct) + '%';
-    }
-
-    async function discoverMovies() {
-        const btn = document.getElementById('discover-btn');
-        const loadTxt = document.getElementById('loading-txt');
-        btn.disabled = true;
-        loadTxt.textContent = 'Curating...';
-
-        const yearMin = document.getElementById('year-min').value;
-        const yearMax = document.getElementById('year-max').value;
-        const directorName = document.getElementById('director-inp').value.trim();
-        const TARGET = 30;
-        const seen = new Set();
-        let titles = [];
-
-        // Director search via TMDB person lookup
-        if (directorName) {
-            try {
-                const personRes = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${TMDB_KEY}&query=${encodeURIComponent(directorName)}`);
-                const personData = await personRes.json();
-                const director = (personData.results || []).find(p => p.known_for_department === 'Directing') || personData.results?.[0];
-                if (director) {
-                    const credRes = await fetch(`https://api.themoviedb.org/3/person/${director.id}/movie_credits?api_key=${TMDB_KEY}`);
-                    const credData = await credRes.json();
-                    // No vote_count floor — include all films the director actually directed
-                    const directed = (credData.crew || [])
-                        .filter(m => m.job === 'Director' && m.title && m.release_date)
-                        .filter(m => {
-                            const yr = parseInt((m.release_date || '').slice(0, 4));
-                            return yr >= parseInt(yearMin) && yr <= parseInt(yearMax);
-                        })
-                        // Dedupe by title (TMDB sometimes has duplicate entries)
-                        .filter((m, i, arr) => arr.findIndex(x => x.title === m.title) === i)
-                        .sort((a, b) => {
-                            const ayr = parseInt((a.release_date || '').slice(0, 4));
-                            const byr = parseInt((b.release_date || '').slice(0, 4));
-                            return ayr - byr;
-                        });
-
-                    if (selectedGenres.size > 0) {
-                        const genreIds = [...selectedGenres].map(g => TMDB_GENRES[g]);
-                        directed.filter(m => (m.genre_ids || []).some(id => genreIds.includes(id)))
-                            .forEach(m => { if (!seen.has(m.title)) { seen.add(m.title); titles.push(m.title); } });
-                    } else {
-                        // No cap for director-only — show their full filmography
-                        directed.forEach(m => { if (!seen.has(m.title)) { seen.add(m.title); titles.push(m.title); } });
-                    }
-                }
-            } catch {}
-        }
-
-        // Genre-only discovery (no director filter)
-        if (selectedGenres.size > 0 && !directorName) {
-            const genres = [...selectedGenres];
-            const perGenre = Math.ceil(TARGET / genres.length);
-            const genreResults = {};
-            await Promise.all(genres.map(async genre => {
-                const genreId = TMDB_GENRES[genre];
-                const genreTitles = [];
-                let page = 1;
-                while (genreTitles.length < perGenre + 5 && page <= 3) {
-                    try {
-                        const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=200&primary_release_date.gte=${yearMin}-01-01&primary_release_date.lte=${yearMax}-12-31&page=${page}`);
-                        const data = await res.json();
-                        if (data.results) {
-                            data.results.forEach(m => { if (m.title && !seen.has(m.title)) { seen.add(m.title); genreTitles.push(m.title); } });
-                        }
-                    } catch {}
-                    page++;
-                }
-                genreResults[genre] = genreTitles.sort(() => Math.random() - 0.5).slice(0, perGenre);
-            }));
-            genres.forEach(genre => titles.push(...(genreResults[genre] || [])));
-        }
-
-        const trimmed = titles.slice(0, TARGET);
-        document.getElementById('mtxt').value = trimmed.join('\n');
-
-        if (trimmed.length === 0) {
-            loadTxt.textContent = 'No results found — try adjusting filters';
-        } else {
-            loadTxt.textContent = `✦ ${trimmed.length} titles ready`;
-        }
-        btn.disabled = false;
-        updateDiscoverBtn();
-    }
-
-    function showScreen(id) {
-        document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
-        document.getElementById(id).classList.add('on');
-        document.querySelector('.sm').scrollTop = 0;
-    }
-
-    function handleCSV(input) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const rawLines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
-            let headerIdx = rawLines.findIndex(line => line.toLowerCase().includes("name"));
-            if (headerIdx === -1) return;
-            const headers = rawLines[headerIdx].split(',');
-            const nameIdx = headers.findIndex(h => h.trim().toLowerCase() === "name");
-            const titles = rawLines.slice(headerIdx + 1).map(line => {
-                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                return (cells[nameIdx] || "").replace(/^"|"$/g, '').trim();
-            }).filter(t => t.length > 0);
-            document.getElementById('mtxt').value = titles.join('\n');
-        };
-        reader.readAsText(input.files[0]);
-    }
-
-    function shuffleList() {
-        let titles = document.getElementById('mtxt').value.split('\n').filter(t => t.trim() !== "");
-        titles.sort(() => Math.random() - 0.5);
-        document.getElementById('mtxt').value = titles.join('\n');
-    }
-
-    async function createRoom() {
-        const mvList = document.getElementById('mtxt').value.split('\n').map(t => t.trim()).filter(t => t !== "");
-        const rid = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const { error } = await sb.from('rooms').insert([{ id: rid, movies: mvList, swipes_1: {}, swipes_2: null }]);
-        if (!error) { state = { ...state, rid, user: 1, movies: mvList }; startSession(); }
-    }
-
-    async function joinRoom() {
-        const rid = document.getElementById('joinID').value.toUpperCase();
-        const { data } = await sb.from('rooms').select('*').eq('id', rid).single();
-        if (data) {
-            state = { ...state, rid, user: 2, movies: data.movies };
-            await sb.from('rooms').update({ swipes_2: {} }).eq('id', rid);
-            startSession();
-        }
-    }
-
-    function startSession() {
-        showScreen('sw-sc');
-        document.getElementById('roomDisp').innerText = state.rid;
-        renderCard();
-        sb.channel('live').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${state.rid}` }, p => {
-            updatePresence(p.new);
-            checkAndLockMatch(p.new);
-        }).subscribe();
-    }
-
-    function updatePresence(db) {
-        if (db.swipes_2 !== null) document.getElementById('dot').style.display = 'block';
-    }
-
-    async function getPoster(title, index) {
-        if (state.cache[index]) return state.cache[index];
-        try {
-            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
-            const data = await res.json();
-            const url = (data.Poster && data.Poster !== "N/A") ? data.Poster : "🎬";
-            state.cache[index] = { url, data };
-            return state.cache[index];
-        } catch { return { url: "🎬", data: null }; }
-    }
-
-    function showEndOfDeck() {
-        document.getElementById('card-inner').classList.remove('flipped');
-        document.getElementById('card-inner').innerHTML = `
-            <div class="card-front">
-                <div class="end-card">
-                    <div class="end-icon">✦</div>
-                    <div class="end-title">That's everything</div>
-                    <div class="end-sub">You've seen all ${state.movies.length} films.<br>Waiting for your partner to finish…</div>
-                </div>
-            </div>`;
-        document.getElementById('btn-yes').disabled = true;
-        document.getElementById('btn-no').disabled = true;
-        document.getElementById('main-card').style.cursor = 'default';
-    }
-
-    function handleCardClick() {
-        if (state.idx < state.movies.length) {
-            document.getElementById('card-inner').classList.toggle('flipped');
-        }
-    }
-
-    async function renderCard() {
-        if (state.isMatched) return;
-        if (state.idx >= state.movies.length) {
-            showEndOfDeck();
-            return;
-        }
-        const title = state.movies[state.idx];
-        document.getElementById('card-inner').classList.remove('flipped');
-        document.getElementById('ctit').innerText = title;
-        const { url, data } = await getPoster(title, state.idx);
-        document.getElementById('pbox').innerHTML = url === "🎬" ? "🎬" : `<img src="${url}">`;
-        const d = data || {};
-        document.getElementById('back-title').innerText = d.Title || title;
-        const tags = [d.Year, d.Runtime, ...(d.Genre ? d.Genre.split(', ') : [])].filter(Boolean);
-        document.getElementById('back-meta').innerHTML = tags.map(t => `<span class="back-tag">${t}</span>`).join('');
-        document.getElementById('back-plot').innerText = d.Plot && d.Plot !== "N/A" ? d.Plot : "";
-        document.getElementById('back-director').innerHTML = d.Director && d.Director !== "N/A" ? `Director <span>${d.Director}</span>` : "";
-        document.getElementById('back-rated').innerHTML = d.Rated && d.Rated !== "N/A" ? `Rated <span>${d.Rated}</span>` : "";
-        document.getElementById('back-imdb').innerHTML = d.imdbRating && d.imdbRating !== "N/A" ? `IMDb <span>★ ${d.imdbRating}</span>` : "";
-    }
-
-    async function vote(v) {
-        if (state.isMatched || state.idx >= state.movies.length) return;
-        state.mySwipes[state.idx] = v;
-        const col = state.user === 1 ? 'swipes_1' : 'swipes_2';
-        const card = document.getElementById('main-card');
-        card.style.transform = v === 'yes' ? 'translateX(100px) rotate(10deg)' : 'translateX(-100px) rotate(-10deg)';
-        card.style.opacity = '0';
-        await sb.from('rooms').update({ [col]: state.mySwipes }).eq('id', state.rid);
-        const { data } = await sb.from('rooms').select('*').eq('id', state.rid).single();
-        checkAndLockMatch(data);
-        setTimeout(() => {
-            card.style.transform = 'none'; card.style.opacity = '1';
-            state.idx++; renderCard();
-        }, 200);
-    }
-
-    function checkAndLockMatch(db) {
-        if (state.isMatched) return;
-        const s1 = db.swipes_1 || {}, s2 = db.swipes_2 || {};
-        state.movies.forEach((movie, i) => {
-            if (s1[i] === 'yes' && s2[i] === 'yes') {
-                state.isMatched = true;
-                showMatchScreen(movie, i);
-            }
-        });
-    }
-
-    async function showMatchScreen(title, index) {
-        document.getElementById('m-name-fin').innerText = title;
-        const result = await getPoster(title, index);
-        const url = result.url || result;
-        document.getElementById('m-post-fin').innerHTML = url === "🎬" ? "🎬" : `<img src="${url}">`;
-        document.getElementById('match-popup').style.display = 'flex';
-    }
+function spinAgain(){
+  document.getElementById('roulette-result').style.display='none';
+  document.getElementById('spin-btn').disabled=false;
+  document.getElementById('spin-title').innerText='Spin again?';
+  showScreen('roulette-spin-sc');
+}
 </script>
 </body>
 </html>
