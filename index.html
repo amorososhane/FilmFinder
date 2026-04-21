@@ -124,32 +124,48 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 .r-add-btn{background:rgba(255,133,162,.08);border:1px solid rgba(255,133,162,.2);color:var(--accent);padding:11px;border-radius:50px;cursor:pointer;width:100%;max-width:300px;font-size:11px;letter-spacing:.06em;margin-bottom:18px;font-family:'DM Sans',sans-serif}
 
 /* WHEEL */
-.wheel-wrap{position:relative;width:270px;height:270px;margin-bottom:18px;flex-shrink:0}
-.wheel-pointer{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:20px solid var(--accent);z-index:10}
-#wheel-canvas{border-radius:50%;display:block}
-.spin-title{font-family:'Playfair Display',serif;font-size:18px;color:rgba(255,255,255,.9);margin-bottom:4px;text-align:center}
-.spin-sub{font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:22px;text-align:center}
-.spin-btn{background:var(--accent);color:#000;border:none;padding:16px 44px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:50px;font-family:'DM Sans',sans-serif}
-.spin-btn:disabled{opacity:.25;cursor:not-allowed}
+.wheel-scene{display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:6px}
+.wheel-wrap{position:relative;width:280px;height:280px;flex-shrink:0;filter:drop-shadow(0 8px 32px rgba(255,133,162,.22))}
+.wheel-pointer-wrap{display:flex;justify-content:center;margin-bottom:-4px;z-index:10;position:relative}
+.wheel-pointer-svg{width:28px;height:28px;filter:drop-shadow(0 2px 6px rgba(255,133,162,.5))}
+#wheel-canvas{border-radius:50%;display:block;border:3px solid rgba(255,133,162,.18);box-shadow:0 0 0 6px rgba(255,133,162,.06),inset 0 0 30px rgba(0,0,0,.3)}
+.spin-header{display:flex;flex-direction:column;align-items:center;margin-bottom:18px;gap:4px}
+.spin-title{font-family:'Playfair Display',serif;font-size:20px;color:#fff;text-align:center;line-height:1.2}
+.spin-sub{font-size:10px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;text-align:center}
+.spin-hearts{font-size:13px;letter-spacing:3px;opacity:.5}
+.spin-btn-wrap{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.spin-btn{background:linear-gradient(135deg,#ff85a2,#ff6090);color:#fff;border:none;padding:16px 52px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:50px;font-family:'DM Sans',sans-serif;box-shadow:0 6px 24px rgba(255,133,162,.35);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.spin-btn::after{content:'✦';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:10px;opacity:.7}
+.spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,133,162,.45)}
+.spin-btn:active:not(:disabled){transform:translateY(0)}
+.spin-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
 
 /* ROULETTE RESULT */
-#roulette-result{position:fixed;inset:0;background:rgba(14,14,14,.97);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:48px 24px 40px;overflow-y:auto}
-.rr-eyebrow{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.rr-title{font-family:'Playfair Display',serif;font-size:24px;color:var(--accent);margin-bottom:14px;line-height:1.2;max-width:270px}
-.rr-poster{width:160px;height:235px;border-radius:12px;overflow:hidden;border:2px solid rgba(255,133,162,.35);margin:0 auto 14px;flex-shrink:0}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes sparkle{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+#roulette-result{position:fixed;inset:0;background:rgba(10,10,14,.97);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:48px 24px 40px;overflow-y:auto;backdrop-filter:blur(8px)}
+.rr-confetti{font-size:18px;letter-spacing:5px;margin-bottom:6px;opacity:.7;animation:sparkle 2s ease-in-out infinite}
+.rr-eyebrow{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.rr-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--accent);margin-bottom:18px;line-height:1.2;max-width:270px;animation:fadeSlideUp .5s ease both}
+.rr-poster-frame{position:relative;width:160px;margin:0 auto 18px;animation:popIn .5s .1s ease both}
+.rr-poster-frame::before{content:'';position:absolute;inset:-4px;border-radius:16px;background:linear-gradient(135deg,rgba(255,133,162,.5),rgba(255,96,144,.2),rgba(255,133,162,.5));z-index:-1;filter:blur(6px)}
+.rr-poster{width:160px;height:235px;border-radius:12px;overflow:hidden;border:2px solid rgba(255,133,162,.4);flex-shrink:0}
 .rr-poster img{width:100%;height:100%;object-fit:cover}
 .rr-poster-empty{width:160px;height:235px;border-radius:12px;background:#1c1c1c;border:2px solid rgba(255,133,162,.15);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px}
 .rr-meta{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:9px}
-.rr-tag{background:rgba(255,133,162,.1);color:var(--accent);font-size:10px;padding:2px 9px;border-radius:20px}
-.rr-plot{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;max-width:270px;margin:0 auto 10px}
+.rr-tag{background:rgba(255,133,162,.12);color:var(--accent);font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,133,162,.2)}
+.rr-plot{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;max-width:270px;margin:0 auto 12px;animation:fadeSlideUp .5s .2s ease both}
 .rr-details{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
 .rr-row{font-size:10px;color:var(--muted)}
 .rr-row span{color:rgba(255,255,255,.75)}
 .rr-imdb{font-size:11px;color:var(--muted);margin-bottom:18px}
 .rr-imdb span{color:#f5c518;font-weight:700}
-.rr-actions{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%}
-.rr-again{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:13px;border-radius:50px;cursor:pointer;width:100%;max-width:250px;font-size:11px;font-family:'DM Sans',sans-serif}
-.rr-new{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:12px;border-radius:50px;cursor:pointer;width:100%;max-width:250px;font-size:10px;font-family:'DM Sans',sans-serif}
+.rr-actions{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;animation:fadeSlideUp .5s .3s ease both}
+.rr-again{background:linear-gradient(135deg,rgba(255,133,162,.15),rgba(255,96,144,.08));border:1px solid rgba(255,133,162,.45);color:var(--accent);padding:14px;border-radius:50px;cursor:pointer;width:100%;max-width:250px;font-size:11px;font-family:'DM Sans',sans-serif;letter-spacing:.06em;transition:all .2s}
+.rr-again:hover{background:rgba(255,133,162,.2);border-color:var(--accent)}
+.rr-new{background:transparent;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.3);padding:12px;border-radius:50px;cursor:pointer;width:100%;max-width:250px;font-size:10px;font-family:'DM Sans',sans-serif;transition:all .2s}
+.rr-new:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.5)}
 #sw-sc .status-header{position:absolute;top:36px;display:flex;flex-direction:column;align-items:center;gap:7px}
 </style>
 </head>
@@ -307,23 +323,36 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <svg viewBox="0 0 16 16" fill="none"><polyline points="10,3 4,8 10,13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Back
   </button>
-  <div class="spin-title" id="spin-title">Ready to spin?</div>
-  <div class="spin-sub">Fate will choose your movie</div>
-  <div class="wheel-wrap">
-    <div class="wheel-pointer"></div>
-    <canvas id="wheel-canvas" width="270" height="270"></canvas>
+  <div class="spin-header">
+    <div class="spin-hearts">♥ ♥ ♥</div>
+    <div class="spin-title" id="spin-title">Ready to spin?</div>
+    <div class="spin-sub">Fate will choose tonight's film</div>
   </div>
-  <button class="spin-btn" id="spin-btn" onclick="spinWheel()">Spin</button>
+  <div class="wheel-scene">
+    <div class="wheel-pointer-wrap">
+      <svg class="wheel-pointer-svg" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 26 C14 26 4 16 4 10 C4 4.477 8.477 0 14 0 C19.523 0 24 4.477 24 10 C24 16 14 26 14 26Z" fill="#ff85a2"/>
+        <circle cx="14" cy="10" r="4" fill="white" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="wheel-wrap">
+      <canvas id="wheel-canvas" width="280" height="280"></canvas>
+    </div>
+  </div>
+  <div class="spin-btn-wrap">
+    <button class="spin-btn" id="spin-btn" onclick="spinWheel()">Spin the wheel</button>
+  </div>
 </div>
 
 <!-- ROULETTE RESULT -->
 <div id="roulette-result">
+  <div class="rr-confetti">✨ 🎬 ✨</div>
   <div class="rr-eyebrow">Tonight you're watching</div>
   <div class="rr-title" id="rr-title">—</div>
-  <div id="rr-poster-wrap"></div>
+  <div class="rr-poster-frame" id="rr-poster-wrap"></div>
   <div id="rr-details-container"></div> 
   <div class="rr-actions">
-    <button class="rr-again" onclick="spinAgain()">Spin Again</button>
+    <button class="rr-again" onclick="spinAgain()">↺ &nbsp;Spin Again</button>
     <button class="rr-new" onclick="location.reload()">New Session</button>
   </div>
 </div>
@@ -696,7 +725,6 @@ async function setRouletteReady(){
  
 function autoLaunchAndSpin(){
   if(document.getElementById('roulette-spin-sc').classList.contains('on'))return;
-  // Reset wheel state before launching
   wheelAngle=0;
   isSpinning=false;
   drawWheel(rState.movies,0);
@@ -709,33 +737,65 @@ function autoLaunchAndSpin(){
 }
  
 /* ── Wheel drawing ── */
-const WHEEL_COLORS=['#ff85a2','#c9748e','#ff9eb5','#a85c6d','#ffb3c6','#d46b83','#ff6e92','#b34d66'];
- 
+const WHEEL_COLORS=[
+  '#ff85a2','#d4607e','#ff9eb5','#b34d6a',
+  '#ffb3c6','#e0728f','#ff6e92','#c25575',
+  '#ffc8d8','#a84d65','#ff7da0','#cc5f7a'
+];
+
 function drawWheel(movies,angle){
   const canvas=document.getElementById('wheel-canvas');
   if(!canvas||!movies||movies.length===0)return;
   const ctx=canvas.getContext('2d');
-  const cx=135,cy=135,r=125;
-  ctx.clearRect(0,0,270,270);
+  const cx=140,cy=140,r=128,innerR=22;
+  ctx.clearRect(0,0,280,280);
   const slice=(2*Math.PI)/movies.length;
+
   movies.forEach((m,i)=>{
     const start=angle+i*slice-Math.PI/2;
     const end=start+slice;
+
+    // Segment fill
     ctx.beginPath();ctx.moveTo(cx,cy);
     ctx.arc(cx,cy,r,start,end);ctx.closePath();
     ctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length];ctx.fill();
-    ctx.strokeStyle='#141414';ctx.lineWidth=1.2;ctx.stroke();
+
+    // Subtle border
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,end);ctx.closePath();
+    ctx.strokeStyle='rgba(20,20,20,.55)';ctx.lineWidth=1.5;ctx.stroke();
+
+    // Text
     ctx.save();ctx.translate(cx,cy);ctx.rotate(start+slice/2);
     ctx.textAlign='right';
-    ctx.fillStyle=i%2===0?'#000':'#fff';
-    ctx.font=`600 ${Math.min(10,Math.max(7,100/movies.length))}px DM Sans,sans-serif`;
-    ctx.fillText(m.length>14?m.slice(0,13)+'…':m,r-8,4);
+    const label=m.length>13?m.slice(0,12)+'…':m;
+    const fontSize=Math.min(11,Math.max(7,110/movies.length));
+    ctx.font=`600 ${fontSize}px DM Sans,sans-serif`;
+    // subtle text shadow
+    ctx.shadowColor='rgba(0,0,0,.4)';ctx.shadowBlur=3;
+    ctx.fillStyle=i%2===0?'rgba(0,0,0,.75)':'rgba(255,255,255,.92)';
+    ctx.fillText(label,r-10,fontSize/3);
+    ctx.shadowBlur=0;
     ctx.restore();
   });
-  // Center dot
-  ctx.beginPath();ctx.arc(cx,cy,13,0,2*Math.PI);
-  ctx.fillStyle='#141414';ctx.fill();
-  ctx.strokeStyle='rgba(255,133,162,0.35)';ctx.lineWidth=1.2;ctx.stroke();
+
+  // Outer ring glow
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.strokeStyle='rgba(255,133,162,.25)';ctx.lineWidth=3;ctx.stroke();
+
+  // Center circle
+  const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,innerR);
+  grad.addColorStop(0,'#2a2a2a');grad.addColorStop(1,'#1a1a1a');
+  ctx.beginPath();ctx.arc(cx,cy,innerR,0,2*Math.PI);
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.strokeStyle='rgba(255,133,162,.4)';ctx.lineWidth=1.5;ctx.stroke();
+
+  // Center ✦ symbol
+  ctx.fillStyle='rgba(255,133,162,.7)';
+  ctx.font=`bold ${Math.max(10,innerR-4)}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✦',cx,cy);
+  ctx.textBaseline='alphabetic';
 }
  
 function spinWheel() {
@@ -747,8 +807,8 @@ function spinWheel() {
   const movies = rState.movies;
   const slice = (2 * Math.PI) / movies.length;
 
-  // KEY CHANGE: This ensures the result is identical but different every spin
-  const seededValue = getSeededRandom(rState.rid, spinCount);
+  // Use spinCount as the primary seed so every spin produces a different result
+  const seededValue = getSeededRandom(String(spinCount) + rState.rid);
   const targetIdx = Math.floor(seededValue * movies.length);
   
   const extraRotations = 6; 
@@ -785,41 +845,40 @@ async function showRouletteResult(title) {
   const posterWrap = document.getElementById('rr-poster-wrap');
   const detailsCont = document.getElementById('rr-details-container');
   
-  posterWrap.innerHTML = '<div style="font-size:12px; color:var(--muted)">Loading details...</div>';
-  detailsCont.innerHTML = ''; // Clear previous
+  posterWrap.innerHTML = '<div style="width:160px;height:235px;border-radius:12px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)">Loading…</div>';
+  detailsCont.innerHTML = '';
 
   try {
     const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
     const d = await res.json();
     
     if (d.Response === "True") {
-      // Set Poster
-      posterWrap.innerHTML = `<img src="${d.Poster !== 'N/A' ? d.Poster : ''}" style="width:160px; border-radius:12px; margin-bottom:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+      posterWrap.innerHTML = d.Poster !== 'N/A'
+        ? `<div class="rr-poster"><img src="${d.Poster}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"></div>`
+        : `<div class="rr-poster-empty">🎬</div>`;
       
-      // Set Details
       detailsCont.innerHTML = `
-        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px; font-size:11px; color:var(--accent); font-weight:500; text-transform:uppercase;">
-          <span>${d.Year}</span><span>•</span><span>${d.Runtime}</span><span>•</span><span style="color:#f5c518">★ ${d.imdbRating}</span>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
+          <span class="rr-tag">${d.Year}</span>
+          <span class="rr-tag">${d.Runtime}</span>
+          <span class="rr-tag" style="color:#f5c518;border-color:rgba(245,197,24,.3);background:rgba(245,197,24,.08)">★ ${d.imdbRating}</span>
         </div>
-        <div style="font-size:12px; color:rgba(255,255,255,0.6); line-height:1.5; max-width:280px; margin:0 auto 15px auto; padding:0 10px;">
-          ${d.Plot !== 'N/A' ? d.Plot : 'No description available.'}
-        </div>
-        <div style="font-size:10px; color:var(--muted); margin-bottom:20px;">Directed by <span style="color:#fff">${d.Director}</span></div>
+        <div class="rr-plot">${d.Plot !== 'N/A' ? d.Plot : 'No description available.'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:20px">Directed by <span style="color:rgba(255,255,255,.8)">${d.Director}</span></div>
       `;
     } else {
-      posterWrap.innerHTML = '🎬';
-      detailsCont.innerHTML = '<div style="font-size:10px; color:var(--muted)">Details not found</div>';
+      posterWrap.innerHTML = '<div class="rr-poster-empty">🎬</div>';
+      detailsCont.innerHTML = '<div style="font-size:10px;color:var(--muted);margin-bottom:20px">Details not found</div>';
     }
   } catch (e) {
     console.error("Fetch error:", e);
-    posterWrap.innerHTML = '🎬';
+    posterWrap.innerHTML = '<div class="rr-poster-empty">🎬</div>';
   }
 }
 /* ── Spin Again — go back to wheel and spin a new pick ── */
 function spinAgain() {
-  // Move to the next movie in the deterministic sequence
-  spinCount++; 
-  
+  spinCount++; // increment FIRST so the next getSeededRandom call uses a fresh seed
+
   document.getElementById('roulette-result').style.display = 'none';
   wheelAngle = 0;
   isSpinning = false;
@@ -827,12 +886,11 @@ function spinAgain() {
   
   const btn = document.getElementById('spin-btn');
   btn.disabled = false;
-  btn.innerText = 'Spin';
+  btn.innerText = 'Spin the wheel';
   
   drawWheel(rState.movies, 0);
   showScreen('roulette-spin-sc');
   
-  // Optional: If you want it to start spinning immediately when one person clicks
   setTimeout(() => spinWheel(), 1000);
 }
 </script>
